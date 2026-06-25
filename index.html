@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ticket Log — Factors.ai marketing &amp; dev requests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Winky+Rough:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand-red:#FF2020; --brand-red-deep:#F94D00; --brand-yellow:#FFF020;
+  --brand-yellow-soft:#FFD425; --brand-teal:#AEFFEA; --brand-green:#338877;
+  --black:#080808; --white:#FFFFFF; --off-white:#FFFEFE; --paper:#FFFEFB;
+  --ink-2:#222; --ink-3:#555; --ink-4:#666; --ink-5:#A6A6A6; --ink-7:#CDCDCD;
+  --line:rgba(8,8,8,.12); --line-strong:rgba(8,8,8,.40);
+  --tint-red:#FFF5F1; --tint-yellow:#FFF9E1; --tint-teal:#E6F0F6; --tint-cream:#FFFEFA;
+  --font-serif:"STIX Two Text",Georgia,serif;
+  --font-sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --font-marker:"Winky Rough","Caveat",cursive;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --border:1px solid var(--black);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-sans);color:var(--black);background:var(--off-white);-webkit-font-smoothing:antialiased;line-height:1.5}
+.tex{background-image:radial-gradient(var(--dot,rgba(8,8,8,.05)) 1px,transparent 1.4px);background-size:7px 7px}
+a{color:var(--brand-red);text-decoration:none}
+button{font-family:var(--font-sans);cursor:pointer}
+input,select,textarea{font-family:var(--font-sans);font-size:14px;color:var(--black)}
+
+/* top bar */
+.topbar{border-bottom:var(--border);background:var(--off-white);position:sticky;top:0;z-index:50}
+.topbar-inner{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .mark{width:26px;height:31px;display:block}
+.brand .name{font-family:var(--font-serif);font-weight:600;font-size:20px;letter-spacing:-.01em}
+.brand .name .by{font-family:var(--font-sans);font-weight:500;font-size:11px;letter-spacing:.04em;color:var(--ink-4);display:block;margin-top:-2px}
+.tabs{display:flex;border:var(--border)}
+.tabs button{background:var(--off-white);border:0;padding:9px 20px;font-size:13px;font-weight:600;color:var(--ink-3);border-right:var(--border);transition:background .15s,color .15s}
+.tabs button:last-child{border-right:0}
+.tabs button.active{background:var(--brand-red);color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.gear-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:var(--border);background:var(--white);color:var(--ink-2);transition:.13s}
+.gear-btn:hover{background:var(--black);color:#fff}
+
+/* settings modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(8,8,8,.55);display:none;align-items:center;justify-content:center;z-index:300;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border:var(--border);width:100%;max-width:480px}
+.modal-h{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:var(--border)}
+.modal-h h3{font-family:var(--font-serif);font-weight:600;font-size:19px}
+.modal-x{border:0;background:none;font-size:24px;line-height:1;color:var(--ink-4);cursor:pointer;padding:0 4px}
+.modal-x:hover{color:var(--black)}
+.modal-b{padding:22px}
+.modal-b .lbl{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.modal-b input{width:100%;padding:10px 12px;border:1px solid var(--line-strong);background:var(--white);border-radius:0;outline:none;font-family:var(--font-mono);font-size:13px}
+.modal-b input:focus{border-color:var(--brand-red)}
+.modal-b .hint{font-size:11px;color:var(--ink-4);margin-top:6px;line-height:1.4}
+.fallback-note{margin-top:14px;font-size:11px;color:var(--ink-4)}
+.fallback-note code{font-family:var(--font-mono);background:var(--tint-teal);padding:2px 6px;color:var(--ink-2);word-break:break-all}
+.modal-f{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px;border-top:var(--border)}
+.btn-ghost{border:var(--border);background:var(--white);color:var(--ink-2);padding:10px 16px;font-size:13px;font-weight:600;transition:.13s}
+.btn-ghost:hover{background:var(--black);color:#fff}
+
+/* page header (slim, no banner) */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px;padding-bottom:18px;border-bottom:var(--border)}
+.eyebrow{font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand-red)}
+.page-title{font-family:var(--font-serif);font-weight:500;font-size:34px;line-height:1.05;letter-spacing:-.01em;margin-top:8px}
+.head-marker{font-family:var(--font-marker);font-size:22px;color:var(--brand-red);transform:rotate(-3deg);white-space:nowrap}
+@media(max-width:560px){.head-marker{display:none}}
+
+.wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px}
+.view{display:none}
+.view.active{display:block}
+
+/* form */
+.formgrid{display:grid;grid-template-columns:1fr 332px;gap:28px;align-items:start}
+@media(max-width:900px){.formgrid{grid-template-columns:1fr}}
+.card{background:var(--white);border:var(--border)}
+.card-h{padding:16px 22px;border-bottom:var(--border);display:flex;align-items:center;gap:10px}
+.card-h .dot{width:9px;height:9px;background:var(--brand-red)}
+.card-h h2{font-family:var(--font-serif);font-weight:600;font-size:19px}
+.card-b{padding:22px}
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+label.lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ink-2);margin-bottom:6px}
+label.lbl .req{color:var(--brand-red);margin-left:2px}
+.hint{font-size:11px;color:var(--ink-4);margin-top:5px;line-height:1.4}
+input[type=text],input[type=date],input[type=url],select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line-strong);background:var(--white);border-radius:0;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--brand-red)}
+textarea{resize:vertical;min-height:74px;line-height:1.45}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+.invalid{border-color:var(--brand-red)!important;background:var(--tint-red)!important}
+
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg .opt{border:1px solid var(--line-strong);padding:8px 14px;font-size:13px;font-weight:600;background:var(--white);user-select:none;color:var(--ink-2);transition:.12s}
+.seg .opt:hover{border-color:var(--black)}
+.seg .opt.sel{background:var(--black);color:#fff;border-color:var(--black)}
+.seg .opt[data-p="P0"].sel{background:var(--brand-red);border-color:var(--brand-red)}
+.seg .opt[data-p="P1"].sel{background:var(--brand-red-deep);border-color:var(--brand-red-deep)}
+.seg .opt[data-p="P2"].sel{background:var(--brand-green);border-color:var(--brand-green)}
+.seg .opt[data-p="P3"].sel{background:var(--ink-3);border-color:var(--ink-3)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.tiles{grid-template-columns:1fr}}
+.tile{border:1px solid var(--line-strong);padding:12px 14px;background:var(--white);transition:.12s}
+.tile:hover{border-color:var(--black)}
+.tile.sel{border-color:var(--brand-red);background:var(--tint-red);box-shadow:inset 3px 0 0 var(--brand-red)}
+.tile .t-name{font-size:13.5px;font-weight:600;color:var(--black)}
+.tile .t-assignee{font-size:11px;color:var(--ink-4);margin-top:3px;font-family:var(--font-mono)}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line)}
+.toggle-row:first-of-type{border-top:0}
+.toggle-row .tl{font-size:13px;font-weight:600;color:var(--ink-2)}
+.toggle-row .tl small{display:block;font-weight:400;font-size:11px;color:var(--ink-4);margin-top:2px}
+.sw{position:relative;width:42px;height:23px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sw .track{position:absolute;inset:0;background:var(--ink-7);border:1px solid var(--line-strong);transition:.18s}
+.sw .track::before{content:"";position:absolute;left:2px;top:1.5px;width:17px;height:17px;background:#fff;border:1px solid var(--line-strong);transition:.18s}
+.sw input:checked + .track{background:var(--brand-red);border-color:var(--brand-red)}
+.sw input:checked + .track::before{transform:translateX(19px);border-color:var(--brand-red)}
+
+.seo-block{border:1px dashed var(--brand-red);background:var(--tint-red);padding:18px;margin-top:4px}
+.seo-block .seo-h{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.seo-block .seo-h .mk{font-family:var(--font-marker);font-size:20px;color:var(--brand-red);transform:rotate(-3deg)}
+.seo-block .seo-h .sub{font-size:11px;color:var(--ink-4)}
+.counter{float:right;font-size:11px;color:var(--ink-5);font-family:var(--font-mono)}
+.counter.warn{color:var(--brand-red)}
+.hidden{display:none!important}
+
+.side .card-b{padding:0}
+.sum-row{padding:13px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.sum-row:last-child{border-bottom:0}
+.sum-row .k{color:var(--ink-4);font-weight:500}
+.sum-row .v{color:var(--black);font-weight:600;text-align:right}
+.sum-empty{color:var(--ink-5);font-weight:400!important}
+.badge{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;font-family:var(--font-mono);color:#fff}
+.badge.P0{background:var(--brand-red)} .badge.P1{background:var(--brand-red-deep)}
+.badge.P2{background:var(--brand-green)} .badge.P3{background:var(--ink-3)}
+
+.submit-wrap{padding:20px}
+.btn-primary{width:100%;background:var(--brand-red);color:#fff;border:1px solid var(--brand-red);padding:14px 20px;font-size:15px;font-weight:600;letter-spacing:.01em;transition:.13s}
+.btn-primary:hover{background:#e01414;border-color:#e01414}
+.btn-primary:active{transform:translateY(1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.note-fail{margin-top:12px;font-size:12px;color:var(--brand-red);font-weight:600;display:none}
+
+/* log */
+.log-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.log-controls h2{font-family:var(--font-serif);font-weight:500;font-size:30px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filters select,.filters input{padding:9px 12px;border:1px solid var(--line-strong);background:#fff;min-width:150px}
+.chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
+.chip{border:1px solid var(--line-strong);background:#fff;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--ink-3);transition:.12s}
+.chip:hover{border-color:var(--black)}
+.chip.on{background:var(--black);color:#fff;border-color:var(--black)}
+.chip .ct{font-family:var(--font-mono);font-size:10px;opacity:.7;margin-left:5px}
+
+.tickets{display:flex;flex-direction:column;border:var(--border);border-bottom:0}
+.thead,.trow{display:grid;grid-template-columns:2.2fr 1fr 1fr 1.05fr 80px 1.25fr 34px;gap:14px;align-items:center;padding:13px 18px;border-bottom:var(--border)}
+.del-btn{border:1px solid var(--line-strong);background:#fff;color:var(--ink-4);width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;transition:.12s;padding:0}
+.del-btn:hover{background:var(--brand-red);border-color:var(--brand-red);color:#fff}
+.thead{background:var(--tint-teal);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.trow{background:#fff;transition:background .12s}
+.trow:hover{background:var(--tint-cream)}
+.trow .ttask{font-weight:600;font-size:14px}
+.trow .ttask small{display:block;font-weight:400;font-size:11px;color:var(--ink-4);margin-top:2px;font-family:var(--font-mono)}
+.trow .tcell{font-size:12.5px;color:var(--ink-2)}
+.trow .tcell .mut{color:var(--ink-5);font-size:11px}
+.type-tag{display:inline-block;padding:2px 8px;font-size:10.5px;font-weight:700;background:var(--tint-teal);border:1px solid var(--brand-teal);color:var(--ink-2);white-space:nowrap}
+.type-tag.dev{background:var(--tint-red);border-color:var(--brand-red);color:var(--brand-red)}
+
+/* status select in row */
+.status-wrap{position:relative}
+.status-sel{width:100%;padding:6px 26px 6px 10px;border:1px solid var(--line-strong);background:#fff;font-size:11.5px;font-weight:700;font-family:var(--font-mono);cursor:pointer;-webkit-appearance:none;appearance:none;border-radius:0;color:#fff}
+.status-wrap::after{content:"";position:absolute;right:9px;top:50%;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-65%) rotate(45deg);pointer-events:none;opacity:.85}
+.status-sel option{background:#fff;color:#222;font-weight:600}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+
+.date-group{margin-bottom:26px}
+.date-header{font-family:var(--font-serif);font-weight:600;font-size:18px;color:var(--black);padding:0 2px 10px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--brand-red);margin-bottom:0}
+.date-count{font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:var(--brand-red);padding:1px 8px}
+.empty-log{padding:60px 20px;text-align:center;border:var(--border);background:#fff}
+.empty-log .marker{font-family:var(--font-marker);font-size:26px;color:var(--brand-red);transform:rotate(-3deg)}
+.empty-log p{color:var(--ink-4);margin-top:8px;font-size:14px}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--black);color:#fff;padding:15px 22px;border:1px solid var(--black);display:flex;align-items:center;gap:14px;z-index:200;opacity:0;transition:.3s;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast .tmark{width:18px;height:22px;flex-shrink:0}
+.toast .ttxt{font-size:14px}
+.toast .ttxt b{font-family:var(--font-serif);font-weight:600}
+.toast .ttxt small{display:block;color:var(--ink-7);font-size:11.5px;margin-top:2px;font-family:var(--font-mono)}
+
+.footer{border-top:var(--border);background:var(--off-white)}
+.footer-inner{max-width:1180px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink-4);font-family:var(--font-mono)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 370 448" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M72.15 302.84H184.96C184.96 365.15 134.45 415.69 72.15 415.69V302.84Z" fill="#FF2020"/>
+        <path d="M72.15 167.58H297.83C297.83 229.9 247.31 280.42 184.99 280.42H72.15V167.58Z" fill="#FF2020"/>
+        <path d="M72.15 145.13C72.15 82.81 122.67 32.29 184.99 32.29H297.83C297.83 94.61 247.31 145.13 184.99 145.13H72.15Z" fill="#FF2020"/>
+      </svg>
+      <span class="name">Ticket Log<span class="by">Factors.ai marketing &amp; dev</span></span>
+    </div>
+    <div class="topbar-right">
+      <div class="tabs">
+        <button id="tab-raise" class="active" onclick="switchView('raise')">Raise a ticket</button>
+        <button id="tab-log" onclick="switchView('log')">Ticket log <span id="tab-count"></span></button>
+      </div>
+      <button class="gear-btn" id="gearBtn" onclick="openSettings()" title="Webhook settings" aria-label="Webhook settings">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ===================== RAISE VIEW ===================== -->
+<div id="view-raise" class="view active">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Internal · marketing &amp; dev</div>
+      <h1 class="page-title">Raise a ticket</h1>
+    </div>
+    <span class="head-marker">don&rsquo;t Slack it &mdash; ticket it&nbsp;&rarr;</span>
+  </div>
+  <div class="formgrid">
+    <div class="card">
+      <div class="card-h"><span class="dot"></span><h2>New request</h2></div>
+      <div class="card-b">
+
+        <div class="field">
+          <label class="lbl">Task name <span class="req">*</span></label>
+          <input type="text" id="f-task" placeholder="e.g. Build pricing page in Webflow" oninput="recompute()"/>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Assigned by <span class="req">*</span></label>
+          <select id="f-by" onchange="toggleByOther();recompute()"><option value="">Select&hellip;</option></select>
+          <input type="text" id="f-by-other" class="hidden" placeholder="Type the requester's name" style="margin-top:8px" oninput="recompute()"/>
+          <div class="hint">Not in the list? Pick <b>Other</b> and type the name (e.g. someone from sales).</div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Request category <span class="req">*</span></label>
+          <div class="seg" id="cat-seg">
+            <div class="opt sel" data-cat="general" onclick="setCat('general')">General request</div>
+            <div class="opt" data-cat="dev" onclick="setCat('dev')">Dev request</div>
+          </div>
+          <div class="hint" id="cat-hint">General requests cover social, SEO, PMM &amp; design. Switch to <b>Dev request</b> for Webflow, Framer, automation, bugs, features &amp; polish.</div>
+        </div>
+
+        <div class="field" id="gen-assignee">
+          <label class="lbl">Assignee <span class="req">*</span></label>
+          <select id="f-assignee" onchange="recompute()"><option value="">Select team member&hellip;</option></select>
+        </div>
+
+        <div class="field hidden" id="dev-type-field">
+          <label class="lbl">Dev work type <span class="req">*</span></label>
+          <div class="tiles" id="dev-tiles"></div>
+          <div class="hint" id="dev-assignee-hint"></div>
+        </div>
+
+        <div class="field hidden" id="dev-assignee-field">
+          <label class="lbl">Assignee <span class="req">*</span></label>
+          <select id="f-dev-assignee" onchange="recompute()">
+            <option value="">Select dev&hellip;</option>
+            <option value="Tushar Chaudhary">Tushar Chaudhary</option>
+            <option value="Vasant Suraj">Vasant Suraj</option>
+          </select>
+          <div class="hint">Bugs &amp; fixes, feature requests and polish can go to either dev.</div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Priority <span class="req">*</span></label>
+          <div class="seg" id="prio-seg">
+            <div class="opt" data-p="P0" onclick="setPrio('P0')">P0 · Critical</div>
+            <div class="opt" data-p="P1" onclick="setPrio('P1')">P1 · High</div>
+            <div class="opt" data-p="P2" onclick="setPrio('P2')">P2 · Medium</div>
+            <div class="opt" data-p="P3" onclick="setPrio('P3')">P3 · Low</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Notes <span style="color:var(--ink-5);font-weight:400">(optional)</span></label>
+          <textarea id="f-notes" placeholder="Context, links, references&hellip;" oninput="recompute()"></textarea>
+        </div>
+
+        <!-- WEBFLOW SEO BLOCK -->
+        <div class="seo-block hidden" id="seo-block">
+          <div class="seo-h"><span class="mk">Webflow SEO &mdash; all required</span></div>
+          <div class="seo-h" style="margin-top:-8px"><span class="sub">A Webflow build can&rsquo;t be logged until every SEO field below is filled.</span></div>
+
+          <div class="field">
+            <label class="lbl">Meta title <span class="req">*</span><span class="counter" id="cnt-mtitle">0 / 60</span></label>
+            <input type="text" id="f-mtitle" maxlength="70" placeholder="Pricing &mdash; Factors.ai" oninput="recompute()"/>
+          </div>
+          <div class="field">
+            <label class="lbl">Meta description <span class="req">*</span><span class="counter" id="cnt-mdesc">0 / 160</span></label>
+            <textarea id="f-mdesc" maxlength="180" placeholder="Compare Factors.ai plans&hellip;" oninput="recompute()"></textarea>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label class="lbl">Canonical URL <span class="req">*</span></label>
+              <input type="url" id="f-canon" placeholder="https://factors.ai/pricing" oninput="recompute()"/>
+            </div>
+            <div class="field">
+              <label class="lbl">Slug <span class="req">*</span></label>
+              <input type="text" id="f-slug" placeholder="pricing" oninput="slugify();recompute()"/>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <div class="tl">Schema markup<small>Toggle on if this page needs structured data</small></div>
+            <label class="sw"><input type="checkbox" id="t-schema" onchange="toggleSchema();recompute()"><span class="track"></span></label>
+          </div>
+          <div class="field hidden" id="schema-field" style="margin-top:12px">
+            <label class="lbl">Schema (JSON-LD) <span class="req">*</span></label>
+            <textarea id="f-schema" placeholder='{"@context":"https://schema.org", ...}' oninput="recompute()" style="font-family:var(--font-mono);font-size:12.5px"></textarea>
+            <div class="hint">Required because schema is switched on. Paste the JSON-LD block.</div>
+          </div>
+
+          <div class="toggle-row">
+            <div class="tl">No-index<small>Hide this page from search engines</small></div>
+            <label class="sw"><input type="checkbox" id="t-noindex" onchange="recompute()"><span class="track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="tl">No-follow<small>Tell crawlers not to follow links on the page</small></div>
+            <label class="sw"><input type="checkbox" id="t-nofollow" onchange="recompute()"><span class="track"></span></label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- summary -->
+    <div class="card side">
+      <div class="card-h"><span class="dot"></span><h2>Summary</h2></div>
+      <div class="card-b">
+        <div class="sum-row"><span class="k">Task</span><span class="v sum-empty" id="s-task">&mdash;</span></div>
+        <div class="sum-row"><span class="k">Category</span><span class="v" id="s-cat">General request</span></div>
+        <div class="sum-row"><span class="k">Type</span><span class="v sum-empty" id="s-type">&mdash;</span></div>
+        <div class="sum-row"><span class="k">Assignee</span><span class="v sum-empty" id="s-assignee">&mdash;</span></div>
+        <div class="sum-row"><span class="k">Assigned by</span><span class="v sum-empty" id="s-by">&mdash;</span></div>
+        <div class="sum-row"><span class="k">Priority</span><span class="v sum-empty" id="s-prio">&mdash;</span></div>
+        <div class="sum-row" id="s-seo-row" style="display:none"><span class="k">SEO fields</span><span class="v" id="s-seo">0 / 4</span></div>
+        <div class="sum-row"><span class="k">Initial status</span><span class="v"><span class="status-dot" style="background:#E0533D"></span>Newly Assigned</span></div>
+      </div>
+      <div class="submit-wrap">
+        <button class="btn-primary" id="submitBtn" onclick="submitTicket()">Log ticket &amp; push to Notion &rarr;</button>
+        <div class="note-fail" id="failNote">Fill every required field marked <span style="color:var(--brand-red)">*</span> before logging.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== LOG VIEW ===================== -->
+<div id="view-log" class="view">
+  <div class="log-controls">
+    <h2>Ticket log</h2>
+    <div class="filters">
+      <select id="filter-person" onchange="renderLog()"><option value="">All people</option></select>
+      <select id="filter-status" onchange="renderLog()"><option value="">All statuses</option></select>
+      <select id="filter-prio" onchange="renderLog()">
+        <option value="">All priorities</option>
+        <option>P0</option><option>P1</option><option>P2</option><option>P3</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="Search task&hellip;" oninput="renderLog()"/>
+    </div>
+  </div>
+  <div class="chip-row" id="status-chips"></div>
+  <div id="log-body"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<div class="footer">
+  <div class="footer-inner">
+    <span>Factors.ai · internal ticketing</span>
+    <span>www.factors.ai · Wilmington, DE • Bangalore</span>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <div class="modal-h">
+      <h3>Webhook settings</h3>
+      <button class="modal-x" onclick="closeSettings()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-b">
+      <label class="lbl">n8n webhook URL</label>
+      <input type="url" id="webhookInput" placeholder="https://n8n-api.factors.app/webhook/ticket"/>
+      <div class="hint">Every ticket and status change is POSTed here. Leave blank to use the default fallback.</div>
+      <div class="fallback-note">Fallback: <code id="fallbackShow"></code></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn-ghost" onclick="resetWebhook()">Reset to fallback</button>
+      <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="saveWebhook()">Save &amp; test &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg class="tmark" viewBox="0 0 370 448" xmlns="http://www.w3.org/2000/svg">
+    <path d="M72.15 302.84H184.96C184.96 365.15 134.45 415.69 72.15 415.69V302.84Z" fill="#fff"/>
+    <path d="M72.15 167.58H297.83C297.83 229.9 247.31 280.42 184.99 280.42H72.15V167.58Z" fill="#fff"/>
+    <path d="M72.15 145.13C72.15 82.81 122.67 32.29 184.99 32.29H297.83C297.83 94.61 247.31 145.13 184.99 145.13H72.15Z" fill="#fff"/>
+  </svg>
+  <div class="ttxt"><b id="toast-title">Logged &amp; pushed to Notion</b><small id="toast-sub"></small></div>
+</div>
+
+<script>
+/* ============================================================
+   PEOPLE — flat list, no team tags
+   ============================================================ */
+const PEOPLE = [
+  "Mansi Peswani","Aditi Shinde","Darshan Divakar","Tushar Chaudhary",
+  "Vrushti Oza","Amith Manoj","Nantha","Subiksha","Vasant Suraj",
+];
+
+/* Notion workspace user IDs — used to populate Person-type columns
+   (Assignee / Assigned by) on any board. Map by the app's display name. */
+const NOTION_USER_ID = {
+  "Mansi Peswani":    "1c1d872b-594c-8144-8f21-000287c7443e",
+  "Aditi Shinde":     "304d872b-594c-8173-a19b-0002f51fc0e2",
+  "Darshan Divakar":  "304d872b-594c-81c2-afd7-000243e799f9",
+  "Tushar Chaudhary": "2e7d872b-594c-8180-b855-00027f2a929e",
+  "Vrushti Oza":      "304d872b-594c-8154-8898-0002737e4893",
+  "Amith Manoj":      "2fcd872b-594c-81ac-bd33-00021dcf2f90",
+  "Nantha":           "26ad872b-594c-8158-b1c5-0002d07ae75e",
+  "Subiksha":         "15ed872b-594c-81e6-8396-000248ee6194",
+  "Vasant Suraj":     "304d872b-594c-81d9-bd50-0002a18eeaf2",
+};
+const userId = name => NOTION_USER_ID[name] || null;
+
+/* DEV WORK TYPES */
+const DEV_TYPES = [
+  {id:"webflow",   name:"Webflow development", assignee:"Tushar Chaudhary", fixed:true,  seo:true},
+  {id:"automation",name:"Automation",          assignee:"Vasant Suraj",     fixed:true},
+  {id:"framer",    name:"Dev in Framer",       assignee:"Vasant Suraj",     fixed:true},
+  {id:"bugs",      name:"Bugs & fixes",        assignee:null,               fixed:false},
+  {id:"feature",   name:"Feature request",     assignee:null,               fixed:false},
+  {id:"polish",    name:"Polish",              assignee:null,               fixed:false},
+];
+
+/* STATUSES — mirrors the Notion board, grouped */
+const STATUS_GROUPS = [
+  {group:"To-do",       items:[
+    {name:"Newly Assigned", color:"#E0533D"},
+    {name:"recurring",      color:"#C2772E"},
+    {name:"Backlog",        color:"#8A8A8A"},
+    {name:"Not started",    color:"#B08968"},
+  ]},
+  {group:"In progress", items:[
+    {name:"In review",      color:"#9B6BD6"},
+    {name:"on hold",        color:"#C2A22E"},
+    {name:"In progress",    color:"#3B82C4"},
+  ]},
+  {group:"Complete",    items:[
+    {name:"Done",           color:"#4E9E80"},
+  ]},
+];
+const STATUS_FLAT = STATUS_GROUPS.flatMap(g=>g.items);
+const statusColor = n => (STATUS_FLAT.find(s=>s.name===n)||{color:"#8A8A8A"}).color;
+
+/* STATE */
+let state = { category:"general", devType:null, priority:null };
+let tickets = [];
+let seq = 1042;
+
+/* ---- local persistence: keep the log across refreshes ---- */
+const TICKETS_KEY = "factors_tickets_v1";
+const SEQ_KEY = "factors_seq_v1";
+function saveTickets(){
+  try{
+    localStorage.setItem(TICKETS_KEY, JSON.stringify(tickets));
+    localStorage.setItem(SEQ_KEY, String(seq));
+  }catch(e){}
+}
+function loadTickets(){
+  try{
+    const t=localStorage.getItem(TICKETS_KEY); if(t) tickets=JSON.parse(t)||[];
+    const s=localStorage.getItem(SEQ_KEY); if(s) seq=parseInt(s,10)||seq;
+  }catch(e){ tickets=[]; }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function fillPeople(sel,ph){
+  sel.innerHTML='<option value="">'+ph+'</option>';
+  PEOPLE.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+}
+function initUI(){
+  fillPeople(document.getElementById('f-assignee'),'Select team member…');
+  fillPeople(document.getElementById('f-by'),'Select…');
+  // add "Other" so non-listed requesters (e.g. sales) can type a name
+  const byOther=document.createElement('option'); byOther.value='__other__'; byOther.textContent='Other (type a name)…';
+  document.getElementById('f-by').appendChild(byOther);
+
+  const tw=document.getElementById('dev-tiles'); tw.innerHTML='';
+  DEV_TYPES.forEach(d=>{
+    const el=document.createElement('div'); el.className='tile'; el.dataset.id=d.id;
+    el.onclick=()=>setDevType(d.id);
+    el.innerHTML='<div class="t-name">'+d.name+'</div><div class="t-assignee">'+(d.fixed?'&rarr; '+d.assignee:'&rarr; either dev')+'</div>';
+    tw.appendChild(el);
+  });
+
+  // log filters
+  const fp=document.getElementById('filter-person');
+  PEOPLE.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; fp.appendChild(o); });
+  const fs=document.getElementById('filter-status');
+  STATUS_GROUPS.forEach(g=>{
+    const og=document.createElement('optgroup'); og.label=g.group;
+    g.items.forEach(s=>{ const o=document.createElement('option'); o.value=s.name; o.textContent=s.name; og.appendChild(o); });
+    fs.appendChild(og);
+  });
+
+  // status filter chips
+  const cr=document.getElementById('status-chips');
+  const all=document.createElement('button'); all.className='chip on'; all.dataset.status=''; all.innerHTML='All statuses';
+  all.onclick=()=>setStatusChip(''); cr.appendChild(all);
+  STATUS_FLAT.forEach(s=>{
+    const b=document.createElement('button'); b.className='chip'; b.dataset.status=s.name;
+    b.innerHTML='<span class="status-dot" style="background:'+s.color+'"></span>'+s.name+' <span class="ct" data-status="'+s.name+'">0</span>';
+    b.onclick=()=>setStatusChip(s.name); cr.appendChild(b);
+  });
+
+  recompute();
+}
+
+/* ============================================================
+   FORM INTERACTIONS
+   ============================================================ */
+function setCat(cat){
+  state.category=cat; state.devType=null;
+  document.querySelectorAll('#cat-seg .opt').forEach(o=>o.classList.toggle('sel',o.dataset.cat===cat));
+  document.getElementById('gen-assignee').classList.toggle('hidden',cat==='dev');
+  document.getElementById('dev-type-field').classList.toggle('hidden',cat!=='dev');
+  document.getElementById('dev-assignee-field').classList.add('hidden');
+  document.getElementById('seo-block').classList.add('hidden');
+  document.querySelectorAll('#dev-tiles .tile').forEach(t=>t.classList.remove('sel'));
+  document.getElementById('f-dev-assignee').value='';
+  if(cat==='dev'){ document.getElementById('f-assignee').value=''; }
+  recompute();
+}
+function setDevType(id){
+  state.devType=id;
+  const d=DEV_TYPES.find(x=>x.id===id);
+  document.querySelectorAll('#dev-tiles .tile').forEach(t=>t.classList.toggle('sel',t.dataset.id===id));
+  const needsPick=!d.fixed;
+  document.getElementById('dev-assignee-field').classList.toggle('hidden',!needsPick);
+  document.getElementById('dev-assignee-hint').innerHTML = d.fixed?'Auto-assigned to <b>'+d.assignee+'</b>.':'Pick which dev should own this.';
+  document.getElementById('seo-block').classList.toggle('hidden',!d.seo);
+  recompute();
+}
+function setPrio(p){
+  state.priority=p;
+  document.querySelectorAll('#prio-seg .opt').forEach(o=>o.classList.toggle('sel',o.dataset.p===p));
+  recompute();
+}
+function toggleSchema(){ document.getElementById('schema-field').classList.toggle('hidden',!document.getElementById('t-schema').checked); }
+function slugify(){ const el=document.getElementById('f-slug'); el.value=el.value.toLowerCase().replace(/[^a-z0-9\-\/]+/g,'-').replace(/^-+|-+$/g,''); }
+function currentAssignee(){
+  if(state.category==='general') return document.getElementById('f-assignee').value;
+  const d=DEV_TYPES.find(x=>x.id===state.devType); if(!d) return '';
+  return d.fixed ? d.assignee : document.getElementById('f-dev-assignee').value;
+}
+function toggleByOther(){
+  const isOther=document.getElementById('f-by').value==='__other__';
+  document.getElementById('f-by-other').classList.toggle('hidden',!isOther);
+}
+/* resolved "assigned by" value: the typed name if Other, else the dropdown value */
+function currentBy(){
+  const sel=document.getElementById('f-by').value;
+  return sel==='__other__' ? document.getElementById('f-by-other').value.trim() : sel;
+}
+
+/* ============================================================
+   VALIDATION + SUMMARY
+   ============================================================ */
+function val(id){ return (document.getElementById(id).value||'').trim(); }
+function validate(){
+  const e=[];
+  if(!val('f-task'))e.push('f-task'); if(!currentBy())e.push('f-by'); if(!state.priority)e.push('prio');
+  if(state.category==='general'){ if(!val('f-assignee'))e.push('f-assignee'); }
+  else{
+    if(!state.devType)e.push('dev-type');
+    const d=DEV_TYPES.find(x=>x.id===state.devType);
+    if(d&&!d.fixed&&!val('f-dev-assignee'))e.push('f-dev-assignee');
+    if(d&&d.seo){ ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(!val(f))e.push(f)});
+      if(document.getElementById('t-schema').checked&&!val('f-schema'))e.push('f-schema'); }
+  }
+  return e;
+}
+function seoFilledCount(){ let c=0; ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(val(f))c++}); return c; }
+
+function recompute(){
+  const mt=val('f-mtitle').length, md=val('f-mdesc').length;
+  const c1=document.getElementById('cnt-mtitle'),c2=document.getElementById('cnt-mdesc');
+  if(c1){c1.textContent=mt+' / 60';c1.classList.toggle('warn',mt>60);}
+  if(c2){c2.textContent=md+' / 160';c2.classList.toggle('warn',md>160);}
+
+  const set=(id,v)=>{const e=document.getElementById(id);const empty=!v;e.textContent=v||'—';e.classList.toggle('sum-empty',empty);};
+  set('s-task',val('f-task'));
+  document.getElementById('s-cat').textContent=state.category==='dev'?'Dev request':'General request';
+  const d=DEV_TYPES.find(x=>x.id===state.devType);
+  set('s-type',state.category==='dev'?(d?d.name:''):'General');
+  set('s-assignee',currentAssignee());
+  set('s-by',currentBy());
+  const sp=document.getElementById('s-prio');
+  if(state.priority){sp.innerHTML='<span class="badge '+state.priority+'">'+state.priority+'</span>';sp.classList.remove('sum-empty');}
+  else{sp.textContent='—';sp.classList.add('sum-empty');}
+
+  const seoRow=document.getElementById('s-seo-row');
+  if(d&&d.seo){seoRow.style.display='flex';const n=seoFilledCount();const sc=document.getElementById('s-seo');sc.textContent=n+' / 4';sc.style.color=n===4?'var(--brand-green)':'var(--brand-red)';}
+  else seoRow.style.display='none';
+
+  document.getElementById('submitBtn').disabled=validate().length>0;
+  document.getElementById('failNote').style.display='none';
+}
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+function flagInvalids(errs){
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+  errs.forEach(id=>{const el=document.getElementById(id); if(el&&el.tagName!=='DIV')el.classList.add('invalid');});
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+function submitTicket(){
+  const errs=validate();
+  if(errs.length){flagInvalids(errs);document.getElementById('failNote').style.display='block';return;}
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+
+  const d=DEV_TYPES.find(x=>x.id===state.devType);
+  const assignee=currentAssignee();
+  const id='FAC-'+(seq++);
+  const ticket={
+    id, task:val('f-task'), assignee, by:currentBy(),
+    assigneeId:userId(assignee), byId:userId(currentBy()),   // Notion user IDs for Person columns
+    priority:state.priority, category:state.category, devType:d?d.name:null, notes:val('f-notes'),
+    assignedDate:todayISO(),               // date the ticket was assigned
+    status:"Newly Assigned",               // initial status
+    statusUpdated:todayISO(),
+    seo:(d&&d.seo)?{
+      metaTitle:val('f-mtitle'), metaDescription:val('f-mdesc'),
+      canonical:val('f-canon'), slug:val('f-slug'),
+      schema:document.getElementById('t-schema').checked?val('f-schema'):null,
+      noindex:document.getElementById('t-noindex').checked,
+      nofollow:document.getElementById('t-nofollow').checked,
+    }:null,
+  };
+
+  pushToNotion(ticket);
+  tickets.unshift(ticket);
+  saveTickets();
+  updateCount();
+  showToast(id,assignee);
+  resetForm();
+}
+
+/* ---- n8n WEBHOOK INTEGRATION -----------------------------------------
+   Every ticket (and every status change) is POSTed to an n8n webhook.
+   The URL is editable from the UI (gear icon, top right) and persists
+   in this browser. If never set, it falls back to WEBHOOK_FALLBACK.
+   Payload shape:
+     { event:"ticket.created" | "ticket.status_changed", ...ticket }
+----------------------------------------------------------------------- */
+const WEBHOOK_FALLBACK = "https://n8n-api.factors.app/webhook/ticket";
+
+function getWebhookUrl(){
+  return (window.__WEBHOOK_URL || WEBHOOK_FALLBACK).trim();
+}
+
+function postWebhook(payload){
+  const url = getWebhookUrl();
+  if(!url){ console.log("[Ticket Log] no webhook url set — payload:",payload); return Promise.resolve(); }
+  const body = JSON.stringify(payload);
+
+  // Primary: normal CORS request with JSON content-type. Works when the n8n
+  // webhook has Allowed Origins (CORS) set (e.g. "*"). The browser does a
+  // preflight; n8n answers it; the request goes through and we can read the response.
+  return fetch(url, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body,
+    mode:"cors",
+  })
+  .then(r=>{ if(!r.ok) console.warn("Webhook responded "+r.status); return r; })
+  .catch(()=>{
+    // Fallback: send as text/plain. This is a CORS "simple request" — NO
+    // preflight — so it goes through even if CORS headers aren't configured.
+    // n8n still receives the raw JSON string in the body.
+    return fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=UTF-8" },
+      body,
+      mode:"no-cors",
+    }).catch(e=>console.warn("Webhook error (both attempts failed)",e));
+  });
+}
+
+function pushToNotion(t){
+  const {_notionPageId, ...clean}=t;
+  postWebhook({ event:"ticket.created", ...clean });
+}
+
+function patchNotionStatus(t){
+  const {_notionPageId, ...clean}=t;
+  postWebhook({ event:"ticket.status_changed", id:t.id, task:t.task, assignee:t.assignee, status:t.status, statusUpdated:t.statusUpdated });
+}
+
+function resetForm(){
+  ['f-task','f-notes','f-mtitle','f-mdesc','f-canon','f-slug','f-schema'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-by').value=''; document.getElementById('f-assignee').value=''; document.getElementById('f-dev-assignee').value='';
+  document.getElementById('f-by-other').value=''; document.getElementById('f-by-other').classList.add('hidden');
+  document.getElementById('t-schema').checked=false; document.getElementById('t-noindex').checked=false; document.getElementById('t-nofollow').checked=false;
+  document.getElementById('schema-field').classList.add('hidden');
+  setCat('general');
+  state.priority=null; document.querySelectorAll('#prio-seg .opt').forEach(o=>o.classList.remove('sel'));
+  recompute();
+}
+
+function showToast(id,assignee){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-title').textContent="Logged & pushed to Notion";
+  document.getElementById('toast-sub').textContent=id+' · assigned to '+assignee+' · Newly Assigned';
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400);
+}
+function updateCount(){ const c=tickets.length; document.getElementById('tab-count').textContent=c?('('+c+')'):''; }
+
+/* ============================================================
+   VIEW SWITCH
+   ============================================================ */
+function switchView(v){
+  document.getElementById('view-raise').classList.toggle('active',v==='raise');
+  document.getElementById('view-log').classList.toggle('active',v==='log');
+  document.getElementById('tab-raise').classList.toggle('active',v==='raise');
+  document.getElementById('tab-log').classList.toggle('active',v==='log');
+  if(v==='log') renderLog();
+}
+
+/* ============================================================
+   LOG RENDER + FILTERS + STATUS EDITING
+   ============================================================ */
+let chipStatus='';
+function setStatusChip(s){
+  chipStatus=s;
+  document.querySelectorAll('#status-chips .chip').forEach(c=>c.classList.toggle('on',c.dataset.status===s));
+  renderLog();
+}
+function changeStatus(idx,newStatus){
+  tickets[idx].status=newStatus;
+  tickets[idx].statusUpdated=todayISO();
+  patchNotionStatus(tickets[idx]);
+  saveTickets();
+  renderLog();
+}
+function deleteTicket(id){
+  const t=tickets.find(x=>x.id===id);
+  if(!t) return;
+  if(!confirm('Delete "'+t.task+'" from this log?\n\nThis only removes it from the local log on this browser — the Notion page is not affected.')) return;
+  tickets=tickets.filter(x=>x.id!==id);
+  saveTickets();
+  updateCount();
+  renderLog();
+}
+function renderLog(){
+  STATUS_FLAT.forEach(s=>{
+    const n=tickets.filter(t=>t.status===s.name).length;
+    const span=document.querySelector('.ct[data-status="'+s.name+'"]'); if(span) span.textContent=n;
+  });
+
+  const person=document.getElementById('filter-person').value;
+  const status=document.getElementById('filter-status').value;
+  const prio=document.getElementById('filter-prio').value;
+  const q=document.getElementById('filter-search').value.trim().toLowerCase();
+
+  let rows=tickets.map((t,i)=>({t,i})).filter(({t})=>{
+    if(person&&t.assignee!==person) return false;
+    if(status&&t.status!==status) return false;
+    if(chipStatus&&t.status!==chipStatus) return false;
+    if(prio&&t.priority!==prio) return false;
+    if(q&&!(t.task.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  const body=document.getElementById('log-body');
+  if(!tickets.length){ body.innerHTML='<div class="empty-log"><div class="marker">no tickets yet &rarr;</div><p>Raise your first request and it&rsquo;ll show up here.</p></div>'; return; }
+  if(!rows.length){ body.innerHTML='<div class="empty-log"><div class="marker">nothing matches &rarr;</div><p>No tickets for this filter. Try clearing it.</p></div>'; return; }
+
+  const fmt=d=>new Date(d+'T00:00').toLocaleDateString('en-US',{day:'numeric',month:'short'});
+  const fmtHeader=d=>{
+    const dt=new Date(d+'T00:00');
+    const today=new Date(); today.setHours(0,0,0,0);
+    const diff=Math.round((today-dt)/86400000);
+    let rel='';
+    if(diff===0) rel=' · Today';
+    else if(diff===1) rel=' · Yesterday';
+    return dt.toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+rel;
+  };
+
+  // group by assignedDate, newest first
+  const groups={};
+  rows.forEach(r=>{ const k=r.t.assignedDate||'—'; (groups[k]=groups[k]||[]).push(r); });
+  const dates=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  const rowHtml=({t,i})=>{
+    const typeLabel=t.category==='dev'?t.devType:'General';
+    const slug=t.seo?'<small>/'+t.seo.slug+'</small>':'';
+    let opts='';
+    STATUS_GROUPS.forEach(g=>{
+      opts+='<optgroup label="'+g.group+'">';
+      g.items.forEach(s=>{ opts+='<option value="'+s.name+'"'+(s.name===t.status?' selected':'')+'>'+s.name+'</option>'; });
+      opts+='</optgroup>';
+    });
+    return '<div class="trow">'
+      +'<div class="ttask">'+escapeHtml(t.task)+slug+'<small>'+typeLabel+'</small></div>'
+      +'<div class="tcell">'+t.assignee+'</div>'
+      +'<div class="tcell">'+t.by+'</div>'
+      +'<div class="tcell">'+fmt(t.assignedDate)+'</div>'
+      +'<div><span class="badge '+t.priority+'">'+t.priority+'</span></div>'
+      +'<div class="status-wrap" style="color:'+statusColor(t.status)+'">'
+        +'<select class="status-sel" style="background:'+statusColor(t.status)+'" onchange="changeStatus('+i+',this.value)">'+opts+'</select>'
+      +'</div>'
+      +'<div><button class="del-btn" title="Delete from this log" onclick="deleteTicket(\''+t.id+'\')">&times;</button></div>'
+      +'</div>';
+  };
+
+  let html='';
+  dates.forEach(d=>{
+    html+='<div class="date-group">'
+      +'<div class="date-header">'+(d==='—'?'No date':fmtHeader(d))+' <span class="date-count">'+groups[d].length+'</span></div>'
+      +'<div class="tickets"><div class="thead">'
+      +'<div>Task</div><div>Assignee</div><div>Assigned by</div><div>Assigned</div><div>Priority</div><div>Status</div><div></div></div>';
+    groups[d].forEach(r=>{ html+=rowHtml(r); });
+    html+='</div></div>';
+  });
+  body.innerHTML=html;
+}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ============================================================
+   WEBHOOK SETTINGS (editable URL, persisted in this browser)
+   ============================================================ */
+const WEBHOOK_STORE_KEY = "factors_ticket_webhook_url";
+function loadWebhookUrl(){
+  try{ const v=localStorage.getItem(WEBHOOK_STORE_KEY); if(v) window.__WEBHOOK_URL=v; }catch(e){}
+}
+function openSettings(){
+  document.getElementById('fallbackShow').textContent=WEBHOOK_FALLBACK;
+  document.getElementById('webhookInput').value=(window.__WEBHOOK_URL||"");
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
+function saveWebhook(){
+  const v=document.getElementById('webhookInput').value.trim();
+  window.__WEBHOOK_URL = v || null;
+  try{ if(v) localStorage.setItem(WEBHOOK_STORE_KEY,v); else localStorage.removeItem(WEBHOOK_STORE_KEY); }catch(e){}
+  // fire a test ping so n8n's "Listen for test event" catches it
+  postWebhook({ event:"webhook.test", note:"Ping from Factors.ai ticket log", at:new Date().toISOString() });
+  closeSettings();
+  const t=document.getElementById('toast');
+  document.getElementById('toast-title').textContent="Webhook saved";
+  document.getElementById('toast-sub').textContent="Test ping sent to "+getWebhookUrl();
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400);
+}
+function resetWebhook(){
+  document.getElementById('webhookInput').value="";
+  window.__WEBHOOK_URL=null;
+  try{ localStorage.removeItem(WEBHOOK_STORE_KEY); }catch(e){}
+}
+
+loadWebhookUrl();
+loadTickets();
+initUI();
+updateCount();
+</script>
+</body>
+</html>
