@@ -103,6 +103,26 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 .seg .opt[data-p="P2"].sel{background:var(--brand-green);border-color:var(--brand-green)}
 .seg .opt[data-p="P3"].sel{background:var(--ink-3);border-color:var(--ink-3)}
 
+/* multi-select assignee picker */
+.people-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:560px){.people-pick{grid-template-columns:1fr}}
+.people-pick .p-opt{display:flex;align-items:center;gap:9px;border:1px solid var(--line-strong);padding:9px 12px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink-2);user-select:none;transition:.12s}
+.people-pick .p-opt:hover{border-color:var(--black)}
+.people-pick .p-opt.sel{border-color:var(--brand-red);background:var(--tint-red);box-shadow:inset 3px 0 0 var(--brand-red)}
+.people-pick .p-opt input{width:16px;height:16px;accent-color:var(--brand-red);flex-shrink:0;margin:0}
+.pick-invalid{border:1px solid var(--brand-red);background:var(--tint-red);padding:8px;border-radius:0}
+
+/* attachments */
+.attach-input{display:block;width:100%;font-size:13px;color:var(--ink-3)}
+.attach-input::file-selector-button{font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--ink-2);background:var(--white);border:1px solid var(--line-strong);padding:8px 14px;margin-right:12px;cursor:pointer;transition:.12s}
+.attach-input::file-selector-button:hover{background:var(--black);color:#fff;border-color:var(--black)}
+.attach-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.attach-item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);background:var(--tint-cream);padding:7px 10px;font-size:12px}
+.attach-item .a-name{font-family:var(--font-mono);color:var(--ink-2);word-break:break-all;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attach-item .a-size{color:var(--ink-5);font-family:var(--font-mono);font-size:11px;flex-shrink:0}
+.attach-item .a-rm{border:0;background:none;color:var(--ink-4);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;flex-shrink:0}
+.attach-item .a-rm:hover{color:var(--brand-red)}
+
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:560px){.tiles{grid-template-columns:1fr}}
 .tile{border:1px solid var(--line-strong);padding:12px 14px;background:var(--white);transition:.12s}
@@ -260,8 +280,9 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         </div>
 
         <div class="field" id="gen-assignee">
-          <label class="lbl">Assignee <span class="req">*</span></label>
-          <select id="f-assignee" onchange="recompute()"><option value="">Select team member&hellip;</option></select>
+          <label class="lbl">Assignee(s) <span class="req">*</span></label>
+          <div class="people-pick" id="gen-people"></div>
+          <div class="hint">Pick one or more team members. A ticket can be shared across several people.</div>
         </div>
 
         <div class="field hidden" id="dev-type-field">
@@ -271,13 +292,9 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         </div>
 
         <div class="field hidden" id="dev-assignee-field">
-          <label class="lbl">Assignee <span class="req">*</span></label>
-          <select id="f-dev-assignee" onchange="recompute()">
-            <option value="">Select dev&hellip;</option>
-            <option value="Tushar Chaudhary">Tushar Chaudhary</option>
-            <option value="Vasant Suraj">Vasant Suraj</option>
-          </select>
-          <div class="hint">Bugs &amp; fixes, feature requests and polish can go to either dev.</div>
+          <label class="lbl">Assignee(s) <span class="req">*</span></label>
+          <div class="people-pick" id="dev-people"></div>
+          <div class="hint">Bugs &amp; fixes, feature requests and polish can go to either or both devs.</div>
         </div>
 
         <div class="field">
@@ -295,18 +312,25 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
           <textarea id="f-notes" placeholder="Context, links, references&hellip;" oninput="recompute()"></textarea>
         </div>
 
+        <div class="field">
+          <label class="lbl">Attachments <span style="color:var(--ink-5);font-weight:400">(optional)</span></label>
+          <input type="file" id="f-attach" class="attach-input" multiple onchange="addAttachments(this.files);this.value='';"/>
+          <div class="attach-list" id="attach-list"></div>
+          <div class="hint">Screenshots, briefs, or reference files (max 20&nbsp;MB each) &mdash; uploaded straight to the Notion page.</div>
+        </div>
+
         <!-- WEBFLOW SEO BLOCK -->
         <div class="seo-block hidden" id="seo-block">
           <div class="seo-h"><span class="mk">Webflow SEO &mdash; all required</span></div>
           <div class="seo-h" style="margin-top:-8px"><span class="sub">A Webflow build can&rsquo;t be logged until every SEO field below is filled.</span></div>
 
           <div class="field">
-            <label class="lbl">Meta title <span class="req">*</span><span class="counter" id="cnt-mtitle">0 / 60</span></label>
-            <input type="text" id="f-mtitle" maxlength="70" placeholder="Pricing &mdash; Factors.ai" oninput="recompute()"/>
+            <label class="lbl">Meta title <span class="req">*</span></label>
+            <input type="text" id="f-mtitle" placeholder="Pricing &mdash; Factors.ai" oninput="recompute()"/>
           </div>
           <div class="field">
-            <label class="lbl">Meta description <span class="req">*</span><span class="counter" id="cnt-mdesc">0 / 160</span></label>
-            <textarea id="f-mdesc" maxlength="180" placeholder="Compare Factors.ai plans&hellip;" oninput="recompute()"></textarea>
+            <label class="lbl">Meta description <span class="req">*</span></label>
+            <textarea id="f-mdesc" placeholder="Compare Factors.ai plans&hellip;" oninput="recompute()"></textarea>
           </div>
           <div class="row2">
             <div class="field">
@@ -349,9 +373,10 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         <div class="sum-row"><span class="k">Task</span><span class="v sum-empty" id="s-task">&mdash;</span></div>
         <div class="sum-row"><span class="k">Category</span><span class="v" id="s-cat">General request</span></div>
         <div class="sum-row"><span class="k">Type</span><span class="v sum-empty" id="s-type">&mdash;</span></div>
-        <div class="sum-row"><span class="k">Assignee</span><span class="v sum-empty" id="s-assignee">&mdash;</span></div>
+        <div class="sum-row"><span class="k">Assignee(s)</span><span class="v sum-empty" id="s-assignee">&mdash;</span></div>
         <div class="sum-row"><span class="k">Assigned by</span><span class="v sum-empty" id="s-by">&mdash;</span></div>
         <div class="sum-row"><span class="k">Priority</span><span class="v sum-empty" id="s-prio">&mdash;</span></div>
+        <div class="sum-row" id="s-attach-row" style="display:none"><span class="k">Attachments</span><span class="v" id="s-attach">0</span></div>
         <div class="sum-row" id="s-seo-row" style="display:none"><span class="k">SEO fields</span><span class="v" id="s-seo">0 / 4</span></div>
         <div class="sum-row"><span class="k">Initial status</span><span class="v"><span class="status-dot" style="background:#E0533D"></span>Newly Assigned</span></div>
       </div>
@@ -476,8 +501,12 @@ const statusColor = n => (STATUS_FLAT.find(s=>s.name===n)||{color:"#8A8A8A"}).co
 
 /* STATE */
 let state = { category:"general", devType:null, priority:null };
+let attachments = [];   // [{name, size, type}]
 let tickets = [];
 let seq = 1042;
+
+/* devs available for the "either dev" pick (bugs / feature / polish) */
+const DEV_PEOPLE = ["Tushar Chaudhary","Vasant Suraj"];
 
 /* ---- local persistence: keep the log across refreshes ---- */
 const TICKETS_KEY = "factors_tickets_v1";
@@ -502,8 +531,29 @@ function fillPeople(sel,ph){
   sel.innerHTML='<option value="">'+ph+'</option>';
   PEOPLE.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
 }
+/* build a checkbox list of people into a container */
+function fillPeoplePick(container,names){
+  container.innerHTML='';
+  names.forEach(n=>{
+    const lab=document.createElement('label'); lab.className='p-opt';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.value=n;
+    cb.onchange=()=>{ lab.classList.toggle('sel',cb.checked); recompute(); };
+    const span=document.createElement('span'); span.textContent=n;
+    lab.appendChild(cb); lab.appendChild(span); container.appendChild(lab);
+  });
+}
+/* read checked names from a picker container */
+function pickedNames(container){
+  return Array.from(container.querySelectorAll('input:checked')).map(cb=>cb.value);
+}
+/* clear all checks in a picker container */
+function clearPick(container){
+  container.querySelectorAll('input:checked').forEach(cb=>{ cb.checked=false; cb.closest('.p-opt').classList.remove('sel'); });
+}
+
 function initUI(){
-  fillPeople(document.getElementById('f-assignee'),'Select team member…');
+  fillPeoplePick(document.getElementById('gen-people'),PEOPLE);
+  fillPeoplePick(document.getElementById('dev-people'),DEV_PEOPLE);
   fillPeople(document.getElementById('f-by'),'Select…');
   // add "Other" so non-listed requesters (e.g. sales) can type a name
   const byOther=document.createElement('option'); byOther.value='__other__'; byOther.textContent='Other (type a name)…';
@@ -551,8 +601,8 @@ function setCat(cat){
   document.getElementById('dev-assignee-field').classList.add('hidden');
   document.getElementById('seo-block').classList.add('hidden');
   document.querySelectorAll('#dev-tiles .tile').forEach(t=>t.classList.remove('sel'));
-  document.getElementById('f-dev-assignee').value='';
-  if(cat==='dev'){ document.getElementById('f-assignee').value=''; }
+  clearPick(document.getElementById('dev-people'));
+  if(cat==='dev'){ clearPick(document.getElementById('gen-people')); }
   recompute();
 }
 function setDevType(id){
@@ -570,12 +620,70 @@ function setPrio(p){
   document.querySelectorAll('#prio-seg .opt').forEach(o=>o.classList.toggle('sel',o.dataset.p===p));
   recompute();
 }
+/* ---- attachments (Option A: files carried as base64 in the webhook payload,
+   so n8n can upload them straight to the Notion page's Files property) ---- */
+const MAX_ATTACH_BYTES = 20 * 1024 * 1024;   // Notion single-request upload cap = 20 MB/file
+let attachmentsReading = 0;                  // how many files are still encoding
+
+function fmtBytes(b){
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+/* read a File as base64 WITHOUT the "data:<mime>;base64," prefix */
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>{ const s=String(r.result); const i=s.indexOf(','); resolve(i>=0?s.slice(i+1):s); };
+    r.onerror=()=>reject(r.error||new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+}
+function addAttachments(fileList){
+  Array.from(fileList).forEach(f=>{
+    // skip exact duplicates (same name + size)
+    if(attachments.some(a=>a.name===f.name && a.size===f.size)) return;
+    // skip anything Notion can't take in a single upload request
+    if(f.size>MAX_ATTACH_BYTES){
+      alert('"'+f.name+'" is '+fmtBytes(f.size)+'. Max per file is 20 MB (Notion upload limit) — skipped.');
+      return;
+    }
+    const entry={ name:f.name, size:f.size, type:f.type||'', data:null, reading:true, error:false };
+    attachments.push(entry);
+    attachmentsReading++;
+    renderAttachments(); recompute();
+    fileToBase64(f)
+      .then(b64=>{ entry.data=b64; })
+      .catch(()=>{ entry.error=true; })
+      .finally(()=>{ entry.reading=false; attachmentsReading=Math.max(0,attachmentsReading-1); renderAttachments(); recompute(); });
+  });
+}
+function removeAttachment(i){
+  const a=attachments[i];
+  if(a&&a.reading) attachmentsReading=Math.max(0,attachmentsReading-1);
+  attachments.splice(i,1); renderAttachments(); recompute();
+}
+function renderAttachments(){
+  const wrap=document.getElementById('attach-list');
+  wrap.innerHTML=attachments.map((a,i)=>{
+    const status=a.reading?'<span class="a-size" style="color:var(--ink-4)">reading&hellip;</span>'
+               :a.error?'<span class="a-size" style="color:var(--brand-red)">failed</span>'
+               :'<span class="a-size">'+fmtBytes(a.size)+'</span>';
+    return '<div class="attach-item">'
+      +'<span class="a-name" title="'+escapeHtml(a.name)+'">'+escapeHtml(a.name)+'</span>'
+      +status
+      +'<button type="button" class="a-rm" title="Remove" onclick="removeAttachment('+i+')">&times;</button>'
+    +'</div>';
+  }).join('');
+}
+
 function toggleSchema(){ document.getElementById('schema-field').classList.toggle('hidden',!document.getElementById('t-schema').checked); }
 function slugify(){ const el=document.getElementById('f-slug'); el.value=el.value.toLowerCase().replace(/[^a-z0-9\-\/]+/g,'-').replace(/^-+|-+$/g,''); }
-function currentAssignee(){
-  if(state.category==='general') return document.getElementById('f-assignee').value;
-  const d=DEV_TYPES.find(x=>x.id===state.devType); if(!d) return '';
-  return d.fixed ? d.assignee : document.getElementById('f-dev-assignee').value;
+/* returns an array of assignee names (possibly several) */
+function currentAssignees(){
+  if(state.category==='general') return pickedNames(document.getElementById('gen-people'));
+  const d=DEV_TYPES.find(x=>x.id===state.devType); if(!d) return [];
+  return d.fixed ? [d.assignee] : pickedNames(document.getElementById('dev-people'));
 }
 function toggleByOther(){
   const isOther=document.getElementById('f-by').value==='__other__';
@@ -594,11 +702,11 @@ function val(id){ return (document.getElementById(id).value||'').trim(); }
 function validate(){
   const e=[];
   if(!val('f-task'))e.push('f-task'); if(!currentBy())e.push('f-by'); if(!state.priority)e.push('prio');
-  if(state.category==='general'){ if(!val('f-assignee'))e.push('f-assignee'); }
+  if(state.category==='general'){ if(currentAssignees().length===0)e.push('gen-people'); }
   else{
     if(!state.devType)e.push('dev-type');
     const d=DEV_TYPES.find(x=>x.id===state.devType);
-    if(d&&!d.fixed&&!val('f-dev-assignee'))e.push('f-dev-assignee');
+    if(d&&!d.fixed&&currentAssignees().length===0)e.push('dev-people');
     if(d&&d.seo){ ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(!val(f))e.push(f)});
       if(document.getElementById('t-schema').checked&&!val('f-schema'))e.push('f-schema'); }
   }
@@ -607,18 +715,17 @@ function validate(){
 function seoFilledCount(){ let c=0; ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(val(f))c++}); return c; }
 
 function recompute(){
-  const mt=val('f-mtitle').length, md=val('f-mdesc').length;
-  const c1=document.getElementById('cnt-mtitle'),c2=document.getElementById('cnt-mdesc');
-  if(c1){c1.textContent=mt+' / 60';c1.classList.toggle('warn',mt>60);}
-  if(c2){c2.textContent=md+' / 160';c2.classList.toggle('warn',md>160);}
-
   const set=(id,v)=>{const e=document.getElementById(id);const empty=!v;e.textContent=v||'—';e.classList.toggle('sum-empty',empty);};
   set('s-task',val('f-task'));
   document.getElementById('s-cat').textContent=state.category==='dev'?'Dev request':'General request';
   const d=DEV_TYPES.find(x=>x.id===state.devType);
   set('s-type',state.category==='dev'?(d?d.name:''):'General');
-  set('s-assignee',currentAssignee());
+  set('s-assignee',currentAssignees().join(', '));
   set('s-by',currentBy());
+
+  const attachRow=document.getElementById('s-attach-row');
+  if(attachments.length){ attachRow.style.display='flex'; document.getElementById('s-attach').textContent=attachments.length+(attachments.length===1?' file':' files'); }
+  else attachRow.style.display='none';
   const sp=document.getElementById('s-prio');
   if(state.priority){sp.innerHTML='<span class="badge '+state.priority+'">'+state.priority+'</span>';sp.classList.remove('sum-empty');}
   else{sp.textContent='—';sp.classList.add('sum-empty');}
@@ -627,7 +734,7 @@ function recompute(){
   if(d&&d.seo){seoRow.style.display='flex';const n=seoFilledCount();const sc=document.getElementById('s-seo');sc.textContent=n+' / 4';sc.style.color=n===4?'var(--brand-green)':'var(--brand-red)';}
   else seoRow.style.display='none';
 
-  document.getElementById('submitBtn').disabled=validate().length>0;
+  document.getElementById('submitBtn').disabled=validate().length>0 || attachmentsReading>0;
   document.getElementById('failNote').style.display='none';
 }
 
@@ -636,22 +743,41 @@ function recompute(){
    ============================================================ */
 function flagInvalids(errs){
   document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
-  errs.forEach(id=>{const el=document.getElementById(id); if(el&&el.tagName!=='DIV')el.classList.add('invalid');});
+  document.querySelectorAll('.pick-invalid').forEach(e=>e.classList.remove('pick-invalid'));
+  errs.forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(id==='gen-people'||id==='dev-people'){ el.classList.add('pick-invalid'); }
+    else if(el.tagName!=='DIV'){ el.classList.add('invalid'); }
+  });
 }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 
 function submitTicket(){
   const errs=validate();
   if(errs.length){flagInvalids(errs);document.getElementById('failNote').style.display='block';return;}
+  if(attachmentsReading>0){ return; }   // still encoding files — button is disabled anyway
   document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
 
   const d=DEV_TYPES.find(x=>x.id===state.devType);
-  const assignee=currentAssignee();
+  const assignees=currentAssignees();
   const id='FAC-'+(seq++);
+
+  // only files that finished encoding cleanly
+  const usable=attachments.filter(a=>a.data && !a.error);
+  // metadata-only copy for the LOCAL log (base64 would blow the ~5 MB localStorage quota)
+  const attachmentsMeta=usable.map(a=>({name:a.name,size:a.size,type:a.type}));
+  // FULL copy WITH base64 content — sent to n8n so it can upload to Notion
+  const attachmentsFull=usable.map(a=>({name:a.name,size:a.size,type:a.type,data:a.data}));
+
   const ticket={
-    id, task:val('f-task'), assignee, by:currentBy(),
-    assigneeId:userId(assignee), byId:userId(currentBy()),   // Notion user IDs for Person columns
+    id, task:val('f-task'),
+    assignees,                                   // array of names
+    assignee:assignees.join(', '),               // legacy comma-joined string
+    assigneeIds:assignees.map(userId).filter(Boolean),  // array of Notion user IDs for the Person column
+    by:currentBy(),
+    byId:userId(currentBy()),                    // Notion user ID for Person column
     priority:state.priority, category:state.category, devType:d?d.name:null, notes:val('f-notes'),
+    attachments:attachmentsMeta,                 // stored copy = metadata only (no base64)
     assignedDate:todayISO(),               // date the ticket was assigned
     status:"Newly Assigned",               // initial status
     statusUpdated:todayISO(),
@@ -664,11 +790,11 @@ function submitTicket(){
     }:null,
   };
 
-  pushToNotion(ticket);
-  tickets.unshift(ticket);
+  pushToNotion(ticket, attachmentsFull);   // webhook gets the base64 payload
+  tickets.unshift(ticket);                 // local log keeps metadata only
   saveTickets();
   updateCount();
-  showToast(id,assignee);
+  showToast(id,assignees);
   resetForm();
 }
 
@@ -678,6 +804,10 @@ function submitTicket(){
    in this browser. If never set, it falls back to WEBHOOK_FALLBACK.
    Payload shape:
      { event:"ticket.created" | "ticket.status_changed", ...ticket }
+   Attachments on ticket.created are sent as:
+     attachments: [ { name, size, type, data } ]   // data = base64, no data: prefix
+   so the n8n flow can push the bytes into the Notion page's Files property
+   via Notion's file-upload API (create upload -> send bytes -> attach id).
 ----------------------------------------------------------------------- */
 const WEBHOOK_FALLBACK = "https://n8n-api.factors.app/webhook/ticket";
 
@@ -713,19 +843,21 @@ function postWebhook(payload){
   });
 }
 
-function pushToNotion(t){
+function pushToNotion(t, attachmentsWithData){
   const {_notionPageId, ...clean}=t;
-  postWebhook({ event:"ticket.created", ...clean });
+  // send the base64 copy if provided, else fall back to whatever's on the ticket
+  postWebhook({ event:"ticket.created", ...clean, attachments: attachmentsWithData || clean.attachments || [] });
 }
 
 function patchNotionStatus(t){
-  const {_notionPageId, ...clean}=t;
-  postWebhook({ event:"ticket.status_changed", id:t.id, task:t.task, assignee:t.assignee, status:t.status, statusUpdated:t.statusUpdated });
+  postWebhook({ event:"ticket.status_changed", id:t.id, task:t.task, assignees:ticketAssignees(t), assignee:t.assignee, status:t.status, statusUpdated:t.statusUpdated });
 }
 
 function resetForm(){
   ['f-task','f-notes','f-mtitle','f-mdesc','f-canon','f-slug','f-schema'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-by').value=''; document.getElementById('f-assignee').value=''; document.getElementById('f-dev-assignee').value='';
+  document.getElementById('f-by').value='';
+  clearPick(document.getElementById('gen-people')); clearPick(document.getElementById('dev-people'));
+  attachments=[]; renderAttachments();
   document.getElementById('f-by-other').value=''; document.getElementById('f-by-other').classList.add('hidden');
   document.getElementById('t-schema').checked=false; document.getElementById('t-noindex').checked=false; document.getElementById('t-nofollow').checked=false;
   document.getElementById('schema-field').classList.add('hidden');
@@ -734,10 +866,11 @@ function resetForm(){
   recompute();
 }
 
-function showToast(id,assignee){
+function showToast(id,assignees){
+  const who=Array.isArray(assignees)?assignees.join(', '):assignees;
   const t=document.getElementById('toast');
   document.getElementById('toast-title').textContent="Logged & pushed to Notion";
-  document.getElementById('toast-sub').textContent=id+' · assigned to '+assignee+' · Newly Assigned';
+  document.getElementById('toast-sub').textContent=id+' · assigned to '+who+' · Newly Assigned';
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400);
 }
 function updateCount(){ const c=tickets.length; document.getElementById('tab-count').textContent=c?('('+c+')'):''; }
@@ -790,7 +923,7 @@ function renderLog(){
   const q=document.getElementById('filter-search').value.trim().toLowerCase();
 
   let rows=tickets.map((t,i)=>({t,i})).filter(({t})=>{
-    if(person&&t.assignee!==person) return false;
+    if(person && !ticketAssignees(t).includes(person)) return false;
     if(status&&t.status!==status) return false;
     if(chipStatus&&t.status!==chipStatus) return false;
     if(prio&&t.priority!==prio) return false;
@@ -829,8 +962,8 @@ function renderLog(){
     });
     return '<div class="trow">'
       +'<div class="ttask">'+escapeHtml(t.task)+slug+'<small>'+typeLabel+'</small></div>'
-      +'<div class="tcell">'+t.assignee+'</div>'
-      +'<div class="tcell">'+t.by+'</div>'
+      +'<div class="tcell">'+escapeHtml(ticketAssignees(t).join(', '))+'</div>'
+      +'<div class="tcell">'+escapeHtml(t.by||'')+'</div>'
       +'<div class="tcell">'+fmt(t.assignedDate)+'</div>'
       +'<div><span class="badge '+t.priority+'">'+t.priority+'</span></div>'
       +'<div class="status-wrap" style="color:'+statusColor(t.status)+'">'
@@ -851,7 +984,14 @@ function renderLog(){
   });
   body.innerHTML=html;
 }
-function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* normalise a ticket's assignees to an array — supports old records that
+   only had a single `assignee` string */
+function ticketAssignees(t){
+  if(Array.isArray(t.assignees)) return t.assignees;
+  if(t.assignee) return String(t.assignee).split(',').map(s=>s.trim()).filter(Boolean);
+  return [];
+}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ============================================================
    WEBHOOK SETTINGS (editable URL, persisted in this browser)
