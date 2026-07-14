@@ -170,13 +170,33 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 /* log */
 .log-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
 .log-controls h2{font-family:var(--font-serif);font-weight:500;font-size:30px}
-.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.filters select,.filters input{padding:9px 12px;border:1px solid var(--line-strong);background:#fff;min-width:150px}
-.chip-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
-.chip{border:1px solid var(--line-strong);background:#fff;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--ink-3);transition:.12s}
+.log-tools{position:relative}
+.filter-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);background:#fff;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-2);transition:.12s}
+.filter-btn:hover{background:var(--black);color:#fff;border-color:var(--black)}
+.filter-btn .filter-count{background:var(--brand-red);color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px}
+.filter-pop{position:absolute;top:calc(100% + 8px);right:0;width:290px;background:#fff;border:var(--border);box-shadow:0 18px 50px rgba(8,8,8,.22);padding:16px;z-index:60;display:none}
+.filter-pop.show{display:block}
+.filter-pop .fp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.filter-pop .fp-head span{font-family:var(--font-serif);font-weight:600;font-size:16px}
+.filter-pop .fp-clear{border:0;background:none;color:var(--brand-red);font-size:12px;font-weight:600;cursor:pointer;padding:0}
+.filter-pop .fp-lbl{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:10px 0 5px}
+.filter-pop select,.filter-pop input{width:100%;padding:9px 11px;border:1px solid var(--line-strong);background:#fff;font-size:13px;border-radius:0;outline:none}
+.filter-pop select:focus,.filter-pop input:focus{border-color:var(--brand-red)}
+.filter-pop .fp-chips-lbl{font-size:11px;font-weight:600;color:var(--ink-3);margin:14px 0 8px}
+.chip-row{display:flex;gap:7px;flex-wrap:wrap}
+.chip{border:1px solid var(--line-strong);background:#fff;padding:5px 11px;font-size:12px;font-weight:600;color:var(--ink-3);transition:.12s}
 .chip:hover{border-color:var(--black)}
 .chip.on{background:var(--black);color:#fff;border-color:var(--black)}
 .chip .ct{font-family:var(--font-mono);font-size:10px;opacity:.7;margin-left:5px}
+
+/* priority group headers */
+.prio-group{margin-bottom:26px}
+.prio-header{font-family:var(--font-serif);font-weight:600;font-size:18px;color:var(--black);padding:0 2px 10px;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--brand-red);margin-bottom:0}
+.prio-header .p-badge{font-family:var(--font-mono);font-size:12px;font-weight:700;color:#fff;padding:2px 9px}
+.prio-header .p-badge.P0{background:var(--brand-red)} .prio-header .p-badge.P1{background:var(--brand-red-deep)}
+.prio-header .p-badge.P2{background:var(--brand-green)} .prio-header .p-badge.P3{background:var(--ink-3)}
+.prio-header .p-label{font-size:15px;color:var(--ink-2);font-weight:500}
+.prio-count{font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:var(--ink-3);padding:1px 8px}
 
 .tickets{display:flex;flex-direction:column;border:var(--border);border-bottom:0}
 .thead,.trow{display:grid;grid-template-columns:2.2fr 1fr 1fr 1.05fr 80px 1.25fr 34px;gap:14px;align-items:center;padding:13px 18px;border-bottom:var(--border)}
@@ -215,9 +235,48 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 
 .footer{border-top:var(--border);background:var(--off-white)}
 .footer-inner{max-width:1180px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--ink-4);font-family:var(--font-mono)}
+/* logo loader overlay — full screen, sits above everything, removes itself */
+#logo-loader{position:fixed;inset:0;z-index:9999;background:#FC3B2D;overflow:hidden;will-change:transform,opacity}
+#logo-loader canvas{display:block}
+
+/* password gate — cosmetic, sits above the loader */
+#pw-gate{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .55s ease}
+#pw-gate.show{opacity:1}
+#pw-gate.done{opacity:0;pointer-events:none;transition:opacity .5s ease}
+/* backdrop blur animates from 0 -> full in step with the card, so they arrive together */
+#pw-gate .pw-backdrop{position:absolute;inset:0;background:rgba(8,8,8,.18);-webkit-backdrop-filter:blur(0px) saturate(1);backdrop-filter:blur(0px) saturate(1);transition:-webkit-backdrop-filter .6s cubic-bezier(.2,.9,.25,1),backdrop-filter .6s cubic-bezier(.2,.9,.25,1),background .6s ease}
+#pw-gate.show .pw-backdrop{background:rgba(8,8,8,.30);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25)}
+#pw-gate.done .pw-backdrop{-webkit-backdrop-filter:blur(0px) saturate(1);backdrop-filter:blur(0px) saturate(1);background:rgba(8,8,8,0)}
+/* glassy card */
+#pw-gate .pw-card{position:relative;width:min(92vw,380px);background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);border:1px solid rgba(255,255,255,.35);border-radius:18px;padding:32px 30px 28px;box-shadow:0 24px 70px rgba(8,8,8,.30),inset 0 1px 0 rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.04);transform:scale(.92) translateY(14px);opacity:0;transition:transform .6s cubic-bezier(.2,.9,.25,1),opacity .6s cubic-bezier(.2,.9,.25,1)}
+#pw-gate.show .pw-card{transform:scale(1) translateY(0);opacity:1}
+#pw-gate .pw-mark{width:30px;height:36px;display:block;margin-bottom:16px;filter:drop-shadow(0 2px 6px rgba(8,8,8,.25))}
+#pw-gate .pw-h{font-family:var(--font-serif);font-weight:600;font-size:23px;letter-spacing:-.01em;margin-bottom:5px;color:#fff;text-shadow:0 1px 10px rgba(8,8,8,.35)}
+#pw-gate .pw-sub{font-size:13px;color:rgba(255,255,255,.85);margin-bottom:20px;line-height:1.45}
+#pw-gate .pw-lbl{display:block;font-size:12px;font-weight:600;color:rgba(255,255,255,.92);margin-bottom:6px}
+#pw-gate .pw-input{width:100%;padding:11px 13px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.16);border-radius:10px;outline:none;font-size:14px;margin-bottom:16px;color:#fff;transition:border-color .15s,background .15s}
+#pw-gate .pw-input::placeholder{color:rgba(255,255,255,.55)}
+#pw-gate .pw-input:focus{border-color:rgba(255,255,255,.85);background:rgba(255,255,255,.22)}
+/* password field + visibility toggle */
+#pw-gate .pw-pass-wrap{position:relative;margin-bottom:16px}
+#pw-gate .pw-pass-wrap .pw-input{margin-bottom:0;padding-right:44px}
+#pw-gate .pw-eye{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:0;background:none;color:rgba(255,255,255,.75);cursor:pointer;padding:0;border-radius:8px;transition:color .13s,background .13s}
+#pw-gate .pw-eye:hover{color:#fff;background:rgba(255,255,255,.14)}
+#pw-gate .pw-eye svg{width:19px;height:19px;display:block}
+#pw-gate .pw-err{display:none;font-size:12px;font-weight:600;color:#fff;background:rgba(255,32,32,.55);border:1px solid rgba(255,255,255,.3);padding:7px 10px;border-radius:8px;margin:14px 0 0}
+#pw-gate .pw-err.show{display:block}
+#pw-gate .pw-btn{width:100%;background:var(--brand-red);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:13px 20px;font-size:15px;font-weight:600;margin-top:16px;box-shadow:0 6px 18px rgba(255,32,32,.35);transition:.13s}
+#pw-gate .pw-btn:hover{background:#e01414}
+#pw-gate .pw-btn:active{transform:translateY(1px)}
+#pw-gate .pw-card.shake{animation:pw-shake .4s cubic-bezier(.36,.07,.19,.97)}
+@keyframes pw-shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
+@media (prefers-reduced-motion: reduce){#pw-gate .pw-card.shake{animation:none}}
 </style>
 </head>
 <body>
+
+<!-- ===================== LOGO LOADER (plays on every page load) ===================== -->
+<div id="logo-loader" aria-hidden="true"></div>
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -273,10 +332,10 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         <div class="field">
           <label class="lbl">Request category <span class="req">*</span></label>
           <div class="seg" id="cat-seg">
-            <div class="opt sel" data-cat="general" onclick="setCat('general')">General request</div>
-            <div class="opt" data-cat="dev" onclick="setCat('dev')">Dev request</div>
+            <div class="opt hidden" data-cat="general" onclick="setCat('general')">General request</div>
+            <div class="opt sel" data-cat="dev" onclick="setCat('dev')">Dev request</div>
           </div>
-          <div class="hint" id="cat-hint">General requests cover social, SEO, PMM &amp; design. Switch to <b>Dev request</b> for Webflow, Framer, automation, bugs, features &amp; polish.</div>
+          <div class="hint hidden" id="cat-hint">General requests cover social, SEO, PMM &amp; design. Switch to <b>Dev request</b> for Webflow, Framer, automation, bugs, features &amp; polish.</div>
         </div>
 
         <div class="field" id="gen-assignee">
@@ -294,7 +353,22 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         <div class="field hidden" id="dev-assignee-field">
           <label class="lbl">Assignee(s) <span class="req">*</span></label>
           <div class="people-pick" id="dev-people"></div>
-          <div class="hint">Bugs &amp; fixes, feature requests and polish can go to either or both devs.</div>
+          <div class="hint">Bugs &amp; fixes and enhancements can go to either or both devs.</div>
+        </div>
+
+        <div class="field hidden" id="figma-field">
+          <label class="lbl">Figma link <span class="req">*</span></label>
+          <input type="url" id="f-figma" placeholder="https://www.figma.com/file/&hellip;" oninput="recompute()"/>
+          <div class="hint">Required for Webflow and Framer builds. Paste the Figma design link.</div>
+        </div>
+
+        <div class="field hidden" id="freq-field">
+          <label class="lbl">Frequency <span class="req">*</span></label>
+          <div class="seg" id="freq-seg">
+            <div class="opt" data-freq="Daily" onclick="setFreq('Daily')">Daily</div>
+            <div class="opt" data-freq="Weekly" onclick="setFreq('Weekly')">Weekly</div>
+            <div class="opt" data-freq="Monthly" onclick="setFreq('Monthly')">Monthly</div>
+          </div>
         </div>
 
         <div class="field">
@@ -378,6 +452,7 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         <div class="sum-row"><span class="k">Priority</span><span class="v sum-empty" id="s-prio">&mdash;</span></div>
         <div class="sum-row" id="s-attach-row" style="display:none"><span class="k">Attachments</span><span class="v" id="s-attach">0</span></div>
         <div class="sum-row" id="s-seo-row" style="display:none"><span class="k">SEO fields</span><span class="v" id="s-seo">0 / 4</span></div>
+        <div class="sum-row" id="s-freq-row" style="display:none"><span class="k">Frequency</span><span class="v" id="s-freq">&mdash;</span></div>
         <div class="sum-row"><span class="k">Initial status</span><span class="v"><span class="status-dot" style="background:#E0533D"></span>Newly Assigned</span></div>
       </div>
       <div class="submit-wrap">
@@ -392,28 +467,34 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 <div id="view-log" class="view">
   <div class="log-controls">
     <h2>Ticket log</h2>
-    <div class="filters">
-      <select id="filter-person" onchange="renderLog()"><option value="">All people</option></select>
-      <select id="filter-status" onchange="renderLog()"><option value="">All statuses</option></select>
-      <select id="filter-prio" onchange="renderLog()">
-        <option value="">All priorities</option>
-        <option>P0</option><option>P1</option><option>P2</option><option>P3</option>
-      </select>
-      <input type="text" id="filter-search" placeholder="Search task&hellip;" oninput="renderLog()"/>
+    <div class="log-tools">
+      <button id="filter-toggle" class="filter-btn" onclick="toggleFilterPop(event)" aria-haspopup="true" aria-expanded="false" title="Filters">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+        <span>Filters</span>
+        <span id="filter-count" class="filter-count" style="display:none">0</span>
+      </button>
+      <div id="filter-pop" class="filter-pop" role="dialog" aria-label="Filters">
+        <div class="fp-head"><span>Filter tickets</span><button class="fp-clear" onclick="clearFilters()">Clear all</button></div>
+        <label class="fp-lbl">Search</label>
+        <input type="text" id="filter-search" placeholder="Search task&hellip;" oninput="renderLog();updateFilterCount()"/>
+        <label class="fp-lbl">Person</label>
+        <select id="filter-person" onchange="renderLog();updateFilterCount()"><option value="">All people</option></select>
+        <label class="fp-lbl">Status</label>
+        <select id="filter-status" onchange="renderLog();updateFilterCount()"><option value="">All statuses</option></select>
+        <label class="fp-lbl">Priority</label>
+        <select id="filter-prio" onchange="renderLog();updateFilterCount()">
+          <option value="">All priorities</option>
+          <option>P0</option><option>P1</option><option>P2</option><option>P3</option>
+        </select>
+        <div class="fp-chips-lbl">Quick status</div>
+        <div class="chip-row" id="status-chips"></div>
+      </div>
     </div>
   </div>
-  <div class="chip-row" id="status-chips"></div>
   <div id="log-body"></div>
 </div>
 
 </div><!-- /wrap -->
-
-<div class="footer">
-  <div class="footer-inner">
-    <span>Factors.ai · internal ticketing</span>
-    <span>www.factors.ai · Wilmington, DE • Bangalore</span>
-  </div>
-</div>
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
@@ -425,8 +506,18 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
     <div class="modal-b">
       <label class="lbl">n8n webhook URL</label>
       <input type="url" id="webhookInput" placeholder="https://n8n-api.factors.app/webhook/ticket"/>
-      <div class="hint">Every ticket and status change is POSTed here. Leave blank to use the default fallback.</div>
+      <div class="hint">Every ticket and status change is POSTed here (goes to Notion via n8n). Leave blank to use the default fallback.</div>
       <div class="fallback-note">Fallback: <code id="fallbackShow"></code></div>
+
+      <div style="height:1px;background:var(--line);margin:20px 0"></div>
+
+      <label class="lbl">Supabase Project URL</label>
+      <input type="url" id="sbUrlInput" placeholder="https://xxxx.supabase.co"/>
+      <div class="hint">Powers the <b>global</b> ticket log. Without this, the log is local to your browser only.</div>
+      <label class="lbl" style="margin-top:12px">Supabase anon public key</label>
+      <input type="text" id="sbKeyInput" placeholder="eyJhbGciOi... (anon public key, NOT service_role)"/>
+      <div class="hint">Find both in Supabase &rarr; Project Settings &rarr; API. Saved in this browser only.</div>
+      <div id="sbStatus" class="fallback-note" style="margin-top:10px"></div>
     </div>
     <div class="modal-f">
       <button class="btn-ghost" onclick="resetWebhook()">Reset to fallback</button>
@@ -444,6 +535,268 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
   </svg>
   <div class="ttxt"><b id="toast-title">Logged &amp; pushed to Notion</b><small id="toast-sub"></small></div>
 </div>
+
+<!-- Three.js for the logo loader (browser ES modules via CDN import map) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.160.0",
+    "three/examples/jsm/loaders/SVGLoader.js": "https://esm.sh/three@0.160.0/examples/jsm/loaders/SVGLoader.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
+
+(function runLogoLoader(){
+  const el = document.getElementById("logo-loader");
+  if(!el) return;
+
+  // If Three.js fails to load (offline / CDN blocked), don't trap the user
+  // behind a red screen — just remove the overlay so the form is usable.
+  const bail = () => { try{ el.remove(); }catch(e){ el.style.display="none"; } };
+
+  const svg = `<svg width="147" height="249" viewBox="0 0 147 249" xmlns="http://www.w3.org/2000/svg">
+<path d="M65.2559 182.493C61.8675 212.884 37.7431 237.022 7.3584 240.413V182.493H65.2559Z"/>
+<path d="M138.323 94.9341C134.665 127.748 106.835 153.262 73.0449 153.262H7.3584V94.9341H138.323Z"/>
+<path d="M73.0449 7.3584H138.323C134.665 40.1724 106.835 65.6865 73.0449 65.6865H7.7666C11.4244 32.8726 39.2549 7.3584 73.0449 7.3584Z"/>
+</svg>`;
+
+  let scene, cam, renderer, raf = 0;
+  try {
+    scene = new THREE.Scene();
+    cam = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+    cam.position.z = 300;
+    renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    el.appendChild(renderer.domElement);
+  } catch(e){ bail(); return; }
+
+  const faceMat = new THREE.MeshBasicMaterial({ color:0xffffff });
+  const sideMat = new THREE.MeshBasicMaterial({ color:0xf2f2f2 });
+  const mats = [faceMat, sideMat];
+
+  const group = new THREE.Group();
+  const pieces = [];
+
+  const data = new SVGLoader().parse(svg);
+  data.paths.forEach((path)=>{
+    SVGLoader.createShapes(path).forEach((shape)=>{
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth:60, bevelEnabled:true, bevelThickness:4, bevelSize:3, bevelSegments:3,
+      });
+      const mesh = new THREE.Mesh(geo, mats);
+      group.add(mesh); pieces.push(mesh);
+    });
+  });
+
+  const box = new THREE.Box3().setFromObject(group);
+  const c = box.getCenter(new THREE.Vector3());
+  group.children.forEach((m)=>{ m.position.x -= c.x; m.position.y -= c.y; m.position.z -= 30; });
+  group.scale.y = -1;
+  scene.add(group);
+  const baseScaleY = group.scale.y;
+
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(6000,6000), new THREE.MeshBasicMaterial({ color:0xfc3b2d }));
+  bg.position.z = -300; scene.add(bg);
+
+  const whiteMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0 });
+  const whitePlane = new THREE.Mesh(new THREE.PlaneGeometry(1,1), whiteMat);
+  whitePlane.position.z = 40; scene.add(whitePlane);
+
+  const finals = pieces.map((p)=>p.position.clone());
+  const offsets = [
+    new THREE.Vector3(0,260,0),
+    new THREE.Vector3(-260,0,0),
+    new THREE.Vector3(0,-260,0),
+  ];
+
+  let t = 0, phase = 0, revealed = false;
+  let assembledAt = 0;      // time the logo finished settling
+  let unlocked = false;     // becomes true once the correct password is entered
+  let promptShown = false;  // guards showing the password card once
+
+  function animate(){
+    t += 0.016;
+    const assemble = Math.min(t/0.8, 1);
+    const ease = 1 - Math.pow(1-assemble, 3);
+    pieces.forEach((p,i)=>{
+      const off = offsets[i % offsets.length];
+      p.position.x = finals[i].x + off.x*(1-ease);
+      p.position.y = finals[i].y + off.y*(1-ease);
+      p.position.z = finals[i].z + off.z*(1-ease);
+    });
+
+    // HOLD PHASE: logo has assembled — settle it and wait for the password.
+    // We do NOT advance to phase 1 (scale-forward + white wipe) until the
+    // user has entered the correct password (unlocked === true).
+    if(phase === 0 && t > 2.0){
+      phase = 0.5;            // holding
+      assembledAt = t;
+    }
+
+    if(phase === 0.5){
+      // ease rotation toward rest so the mark sits calmly behind the card
+      group.rotation.y *= 0.9;
+      group.rotation.x *= 0.9;
+      // show the password card once, a beat after the logo settles
+      if(!promptShown && t - assembledAt > 0.35){
+        promptShown = true;
+        showPasswordCard();   // defined below; calls unlock() on success
+      }
+      if(unlocked) phase = 1; // password accepted -> continue the flow
+    } else if(phase === 0){
+      group.rotation.y = Math.sin(t*0.8)*0.5;
+      group.rotation.x = Math.cos(t*0.6)*0.12;
+    }
+
+    if(phase === 1){
+      group.rotation.y *= 0.9;
+      group.rotation.x *= 0.9;
+      group.scale.x += group.scale.x*0.04;
+      group.scale.y = baseScaleY*group.scale.x;
+      group.position.z += 9;
+      if(group.position.z > 140){
+        whiteMat.opacity = Math.min(1, whiteMat.opacity + 0.045);
+        const s = whitePlane.scale.x + whitePlane.scale.x*0.09 + 30;
+        whitePlane.scale.set(s, s, 1);
+      }
+    }
+
+    renderer.render(scene, cam);
+
+    if(!revealed && whiteMat.opacity >= 1 && whitePlane.scale.x > window.innerWidth*2){
+      revealed = true;
+      cancelAnimationFrame(raf);
+      el.style.transformOrigin = "center center";
+      el.style.transition = "transform 0.9s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.9s ease";
+      el.style.transform = "scale(2.4)";
+      el.style.opacity = "0";
+      setTimeout(()=>{
+        window.removeEventListener("resize", onResize);
+        renderer.dispose();
+        el.remove();
+      }, 950);
+      return;
+    }
+    raf = requestAnimationFrame(animate);
+  }
+  raf = requestAnimationFrame(animate);
+
+  // Safety net for the ASSEMBLY only: if Three.js renders but the logo never
+  // reaches the hold phase within ~7s, surface the password card anyway so the
+  // user is never stuck. This deliberately does NOT tear down the loader — the
+  // password wait has no time limit (people need time to type).
+  setTimeout(()=>{ if(!promptShown){ promptShown = true; showPasswordCard(); } }, 7000);
+
+  function onResize(){
+    cam.aspect = window.innerWidth/window.innerHeight;
+    cam.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  window.addEventListener("resize", onResize);
+
+  /* ---- PASSWORD GATE ----------------------------------------------------
+     NOTE: this is a COSMETIC gate, not real security. The whole form markup
+     is already in the page, and the password rule (name -> name@factors) is
+     visible in this source. It keeps casual visitors from using the form and
+     fits the animation flow, but a determined outsider can bypass it. For real
+     access control, the form must be served only after a server-side check
+     (e.g. via the n8n layer). See the note we discussed.
+  ------------------------------------------------------------------------ */
+  function showPasswordCard(){
+    // build the blurred backdrop + card
+    const gate = document.createElement("div");
+    gate.id = "pw-gate";
+    gate.innerHTML =
+      '<div class="pw-backdrop"></div>'
+      + '<div class="pw-card" role="dialog" aria-modal="true" aria-label="Sign in to the ticket log">'
+      +   '<svg class="pw-mark" viewBox="0 0 370 448" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+      +     '<path d="M72.15 302.84H184.96C184.96 365.15 134.45 415.69 72.15 415.69V302.84Z" fill="#FF2020"/>'
+      +     '<path d="M72.15 167.58H297.83C297.83 229.9 247.31 280.42 184.99 280.42H72.15V167.58Z" fill="#FF2020"/>'
+      +     '<path d="M72.15 145.13C72.15 82.81 122.67 32.29 184.99 32.29H297.83C297.83 94.61 247.31 145.13 184.99 145.13H72.15Z" fill="#FF2020"/>'
+      +   '</svg>'
+      +   '<h2 class="pw-h">Sign in to continue</h2>'
+      +   '<p class="pw-sub">Enter your name and password to open the ticket log.</p>'
+      +   '<label class="pw-lbl" for="pw-id">Name</label>'
+      +   '<input class="pw-input" id="pw-id" type="text" autocomplete="username" placeholder="" autofocus />'
+      +   '<label class="pw-lbl" for="pw-pass">Password</label>'
+      +   '<div class="pw-pass-wrap">'
+      +     '<input class="pw-input" id="pw-pass" type="password" autocomplete="current-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" />'
+      +     '<button class="pw-eye" id="pw-eye" type="button" aria-label="Show password" aria-pressed="false">'
+      +       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
+      +     '</button>'
+      +   '</div>'
+      +   '<div class="pw-err" id="pw-err">That name and password don&rsquo;t match. Try again.</div>'
+      +   '<button class="pw-btn" id="pw-go" type="button">Unlock &rarr;</button>'
+      + '</div>';
+    document.body.appendChild(gate);
+
+    const idEl   = gate.querySelector("#pw-id");
+    const passEl = gate.querySelector("#pw-pass");
+    const errEl  = gate.querySelector("#pw-err");
+    const card   = gate.querySelector(".pw-card");
+    const eyeBtn = gate.querySelector("#pw-eye");
+    // fade/scale the card in
+    requestAnimationFrame(()=>gate.classList.add("show"));
+    setTimeout(()=>{ try{ idEl.focus(); }catch(e){} }, 60);
+
+    // password visibility toggle (eye = show, eye-off = hide)
+    const EYE_ON  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M6.61 6.61A18.5 18.5 0 0 0 1 12s4 8 11 8a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+    eyeBtn.addEventListener("click", ()=>{
+      const show = passEl.type === "password";
+      passEl.type = show ? "text" : "password";
+      eyeBtn.innerHTML = show ? EYE_OFF : EYE_ON;
+      eyeBtn.setAttribute("aria-pressed", show ? "true" : "false");
+      eyeBtn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      passEl.focus();
+    });
+
+    function fail(){
+      errEl.classList.add("show");
+      card.classList.remove("shake"); void card.offsetWidth; // restart animation
+      card.classList.add("shake");
+      passEl.value = "";
+      passEl.focus();
+    }
+    function attempt(){
+      const name = (idEl.value||"").trim().toLowerCase();
+      const pass = (passEl.value||"");
+      if(!name){ fail(); return; }
+      const expected = name + "@factors";
+      // case-insensitive on the name portion, exact on the "@factors" suffix
+      if(pass.toLowerCase() === expected){
+        // success -> dismiss card, clear blur, let the loader continue its flow
+        gate.classList.remove("show");
+        gate.classList.add("done");
+        setTimeout(()=>{ try{ gate.remove(); }catch(e){} }, 500);
+        unlock();
+      } else {
+        fail();
+      }
+    }
+    gate.querySelector("#pw-go").addEventListener("click", attempt);
+    [idEl, passEl].forEach(inp=>inp.addEventListener("keydown", e=>{
+      if(e.key === "Enter"){ e.preventDefault(); attempt(); }
+      if(errEl.classList.contains("show")) errEl.classList.remove("show");
+    }));
+  }
+
+  function unlock(){
+    unlocked = true;   // the animation loop picks this up and runs phase 1
+  }
+})();
+</script>
+<script type="module">
+// If the module above throws on import (e.g. CDN blocked), remove the overlay.
+window.addEventListener("error", (e)=>{
+  const el = document.getElementById("logo-loader");
+  if(el && e.message && /three|esm\.sh|import/i.test(e.message)) el.remove();
+});
+</script>
 
 <script>
 /* ============================================================
@@ -471,12 +824,12 @@ const userId = name => NOTION_USER_ID[name] || null;
 
 /* DEV WORK TYPES */
 const DEV_TYPES = [
-  {id:"webflow",   name:"Webflow development", assignee:"Tushar Chaudhary", fixed:true,  seo:true},
+  {id:"webflow",   name:"Webflow development", assignee:"Tushar Chaudhary", fixed:true,  seo:true, figma:true},
   {id:"automation",name:"Automation",          assignee:"Vasant Suraj",     fixed:true},
-  {id:"framer",    name:"Dev in Framer",       assignee:"Vasant Suraj",     fixed:true},
+  {id:"framer",    name:"Dev in Framer",       assignee:"Vasant Suraj",     fixed:true, figma:true},
   {id:"bugs",      name:"Bugs & fixes",        assignee:null,               fixed:false},
-  {id:"feature",   name:"Feature request",     assignee:null,               fixed:false},
-  {id:"polish",    name:"Polish",              assignee:null,               fixed:false},
+  {id:"feature",   name:"Enhancements / Improvements", assignee:null,       fixed:false},
+  {id:"recurring", name:"Recurring tasks",     assignee:"Vasant Suraj",     fixed:true,  frequency:true},
 ];
 
 /* STATUSES — mirrors the Notion board, grouped */
@@ -500,13 +853,149 @@ const STATUS_FLAT = STATUS_GROUPS.flatMap(g=>g.items);
 const statusColor = n => (STATUS_FLAT.find(s=>s.name===n)||{color:"#8A8A8A"}).color;
 
 /* STATE */
-let state = { category:"general", devType:null, priority:null };
+let state = { category:"dev", devType:null, priority:null, frequency:null };
 let attachments = [];   // [{name, size, type}]
 let tickets = [];
 let seq = 1042;
 
 /* devs available for the "either dev" pick (bugs / feature / polish) */
 const DEV_PEOPLE = ["Tushar Chaudhary","Vasant Suraj"];
+
+/* ============================================================
+   SUPABASE — global ticket log (read/write/live)
+   Tickets are DUAL-WRITTEN: to n8n (-> Notion) AND to Supabase.
+   Supabase is the source of truth for the shared, live log.
+   Keys are entered once in Settings and saved in this browser.
+   ============================================================ */
+const SB_URL_KEY = "factors_sb_url";
+const SB_ANON_KEY = "factors_sb_anon";
+/* Built-in defaults so the file is plug-and-play when shared: anyone who opens
+   it connects to the global log with no setup. The anon key is public by design
+   (it only works within the table's RLS policies) — safe to embed, unlike the
+   service_role key. The Settings gear can still override these per browser. */
+const SB_URL_DEFAULT  = "https://mpjidlybzshrulyztmpw.supabase.co";
+const SB_ANON_DEFAULT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wamlkbHlienNocnVseXp0bXB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjA3MTgsImV4cCI6MjA5OTU5NjcxOH0._bjzEAIaj6YoSSeIgRFTKrEj_OKXELhtpEY9drk3tKE";
+let SB_URL  = null;
+let SB_ANON = null;
+let sbClient = null;
+let sbCreateClient = null;
+let sbChannel = null;
+let usingSupabase = false;   // true once a client is live
+
+function loadSupabaseCfg(){
+  try{
+    SB_URL  = localStorage.getItem(SB_URL_KEY)  || SB_URL_DEFAULT  || null;
+    SB_ANON = localStorage.getItem(SB_ANON_KEY) || SB_ANON_DEFAULT || null;
+  }catch(e){
+    SB_URL = SB_URL_DEFAULT || null; SB_ANON = SB_ANON_DEFAULT || null;
+  }
+}
+/* obtain createClient: ESM import first, UMD <script> fallback */
+function sbLoadUmd(){
+  return new Promise((resolve,reject)=>{
+    if(window.supabase && window.supabase.createClient){ resolve(window.supabase.createClient); return; }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    s.onload=()=> (window.supabase&&window.supabase.createClient) ? resolve(window.supabase.createClient) : reject(new Error('supabase UMD missing createClient'));
+    s.onerror=()=>reject(new Error('failed to load supabase-js'));
+    document.head.appendChild(s);
+  });
+}
+async function sbEnsureCreate(){
+  if(sbCreateClient) return sbCreateClient;
+  try{ const m=await import('https://esm.sh/@supabase/supabase-js@2'); if(m&&m.createClient){ sbCreateClient=m.createClient; return sbCreateClient; } }catch(e){}
+  sbCreateClient=await sbLoadUmd(); return sbCreateClient;
+}
+/* returns a live client or null (never throws) */
+async function getSupabase(){
+  if(sbClient) return sbClient;
+  if(!SB_URL || !SB_ANON) return null;
+  try{
+    const cc=await sbEnsureCreate();
+    sbClient=cc(SB_URL, SB_ANON);
+    usingSupabase=true;
+    return sbClient;
+  }catch(e){ console.warn('Supabase init failed',e); usingSupabase=false; return null; }
+}
+
+/* map an app ticket -> a Supabase row (snake_case columns) */
+function ticketToRow(t){
+  return {
+    id:t.id, task:t.task,
+    assignees:ticketAssignees(t), assignee:t.assignee||ticketAssignees(t).join(', '),
+    assignee_ids:t.assigneeIds||[], requested_by:t.by||null, by_id:t.byId||null,
+    priority:t.priority, category:t.category, dev_type:t.devType||null,
+    notes:t.notes||null, figma:t.figma||null, frequency:t.frequency||null,
+    seo:t.seo||null, attachments:t.attachments||[],
+    status:t.status||'Newly Assigned',
+    assigned_date:t.assignedDate||null, status_updated:t.statusUpdated||null,
+  };
+}
+/* map a Supabase row -> an app ticket */
+function rowToTicket(r){
+  return {
+    id:r.id, task:r.task,
+    assignees:Array.isArray(r.assignees)?r.assignees:[], assignee:r.assignee||'',
+    assigneeIds:Array.isArray(r.assignee_ids)?r.assignee_ids:[],
+    by:r.requested_by||'', byId:r.by_id||null,
+    priority:r.priority, category:r.category, devType:r.dev_type||null,
+    notes:r.notes||'', figma:r.figma||null, frequency:r.frequency||null,
+    seo:r.seo||null, attachments:Array.isArray(r.attachments)?r.attachments:[],
+    status:r.status||'Newly Assigned',
+    assignedDate:r.assigned_date||(r.created_at?String(r.created_at).slice(0,10):todayISO()),
+    statusUpdated:r.status_updated||null,
+  };
+}
+
+/* insert a ticket into Supabase (fire-and-forget, logged on error) */
+async function sbInsertTicket(t){
+  const sb=await getSupabase(); if(!sb) return;
+  const { error }=await sb.from('tickets').insert(ticketToRow(t));
+  if(error) console.warn('Supabase insert failed:',error.message);
+}
+/* patch status in Supabase */
+async function sbUpdateStatus(t){
+  const sb=await getSupabase(); if(!sb) return;
+  const { error }=await sb.from('tickets').update({ status:t.status, status_updated:t.statusUpdated }).eq('id',t.id);
+  if(error) console.warn('Supabase status update failed:',error.message);
+}
+/* pull the whole log from Supabase into `tickets` and render */
+async function sbLoadAll(){
+  const sb=await getSupabase(); if(!sb) return false;
+  const { data, error }=await sb.from('tickets').select('*').order('created_at',{ascending:false}).limit(500);
+  if(error){ console.warn('Supabase load failed:',error.message); return false; }
+  tickets = (data||[]).map(rowToTicket);
+  updateCount();
+  if(document.getElementById('view-log').classList.contains('active')) renderLog();
+  return true;
+}
+/* subscribe to live changes so the log updates for everyone */
+async function sbSubscribe(){
+  const sb=await getSupabase(); if(!sb || sbChannel) return;
+  sbChannel = sb.channel('tickets-live-app')
+    .on('postgres_changes',{event:'*',schema:'public',table:'tickets'}, payload=>{
+      const r=payload.new||payload.old; if(!r) return;
+      if(payload.eventType==='INSERT'){
+        if(!tickets.some(x=>x.id===r.id)) tickets.unshift(rowToTicket(r));
+      }else if(payload.eventType==='UPDATE'){
+        const i=tickets.findIndex(x=>x.id===r.id); if(i>=0) tickets[i]=rowToTicket(r);
+      }else if(payload.eventType==='DELETE'){
+        tickets=tickets.filter(x=>x.id!==r.id);
+      }
+      updateCount();
+      if(document.getElementById('view-log').classList.contains('active')) renderLog();
+    })
+    .subscribe();
+}
+/* called after keys are saved, or on boot if keys exist */
+async function sbInit(){
+  sbClient=null; sbChannel=null; usingSupabase=false;
+  const sb=await getSupabase();
+  if(!sb) return false;
+  const ok=await sbLoadAll();
+  if(ok) sbSubscribe();
+  return ok;
+}
 
 /* ---- local persistence: keep the log across refreshes ---- */
 const TICKETS_KEY = "factors_tickets_v1";
@@ -587,7 +1076,7 @@ function initUI(){
     b.onclick=()=>setStatusChip(s.name); cr.appendChild(b);
   });
 
-  recompute();
+  setCat('dev');
 }
 
 /* ============================================================
@@ -600,6 +1089,10 @@ function setCat(cat){
   document.getElementById('dev-type-field').classList.toggle('hidden',cat!=='dev');
   document.getElementById('dev-assignee-field').classList.add('hidden');
   document.getElementById('seo-block').classList.add('hidden');
+  document.getElementById('figma-field').classList.add('hidden');
+  document.getElementById('freq-field').classList.add('hidden');
+  document.getElementById('f-figma').value='';
+  state.frequency=null; document.querySelectorAll('#freq-seg .opt').forEach(o=>o.classList.remove('sel'));
   document.querySelectorAll('#dev-tiles .tile').forEach(t=>t.classList.remove('sel'));
   clearPick(document.getElementById('dev-people'));
   if(cat==='dev'){ clearPick(document.getElementById('gen-people')); }
@@ -613,6 +1106,15 @@ function setDevType(id){
   document.getElementById('dev-assignee-field').classList.toggle('hidden',!needsPick);
   document.getElementById('dev-assignee-hint').innerHTML = d.fixed?'Auto-assigned to <b>'+d.assignee+'</b>.':'Pick which dev should own this.';
   document.getElementById('seo-block').classList.toggle('hidden',!d.seo);
+  document.getElementById('figma-field').classList.toggle('hidden',!d.figma);
+  document.getElementById('freq-field').classList.toggle('hidden',!d.frequency);
+  if(!d.frequency){ state.frequency=null; document.querySelectorAll('#freq-seg .opt').forEach(o=>o.classList.remove('sel')); }
+  if(!d.figma){ document.getElementById('f-figma').value=''; }
+  recompute();
+}
+function setFreq(f){
+  state.frequency=f;
+  document.querySelectorAll('#freq-seg .opt').forEach(o=>o.classList.toggle('sel',o.dataset.freq===f));
   recompute();
 }
 function setPrio(p){
@@ -709,6 +1211,8 @@ function validate(){
     if(d&&!d.fixed&&currentAssignees().length===0)e.push('dev-people');
     if(d&&d.seo){ ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(!val(f))e.push(f)});
       if(document.getElementById('t-schema').checked&&!val('f-schema'))e.push('f-schema'); }
+    if(d&&d.figma&&!val('f-figma'))e.push('f-figma');
+    if(d&&d.frequency&&!state.frequency)e.push('freq');
   }
   return e;
 }
@@ -733,6 +1237,10 @@ function recompute(){
   const seoRow=document.getElementById('s-seo-row');
   if(d&&d.seo){seoRow.style.display='flex';const n=seoFilledCount();const sc=document.getElementById('s-seo');sc.textContent=n+' / 4';sc.style.color=n===4?'var(--brand-green)':'var(--brand-red)';}
   else seoRow.style.display='none';
+
+  const freqRow=document.getElementById('s-freq-row');
+  if(d&&d.frequency){freqRow.style.display='flex';const fc=document.getElementById('s-freq');fc.textContent=state.frequency||'—';fc.classList.toggle('sum-empty',!state.frequency);}
+  else freqRow.style.display='none';
 
   document.getElementById('submitBtn').disabled=validate().length>0 || attachmentsReading>0;
   document.getElementById('failNote').style.display='none';
@@ -777,6 +1285,8 @@ function submitTicket(){
     by:currentBy(),
     byId:userId(currentBy()),                    // Notion user ID for Person column
     priority:state.priority, category:state.category, devType:d?d.name:null, notes:val('f-notes'),
+    figma:(d&&d.figma)?val('f-figma'):null,
+    frequency:(d&&d.frequency)?state.frequency:null,
     attachments:attachmentsMeta,                 // stored copy = metadata only (no base64)
     assignedDate:todayISO(),               // date the ticket was assigned
     status:"Newly Assigned",               // initial status
@@ -790,8 +1300,11 @@ function submitTicket(){
     }:null,
   };
 
-  pushToNotion(ticket, attachmentsFull);   // webhook gets the base64 payload
-  tickets.unshift(ticket);                 // local log keeps metadata only
+  pushToNotion(ticket, attachmentsFull);   // webhook -> n8n -> Notion (base64 payload)
+  sbInsertTicket(ticket);                  // Supabase -> global live log
+  // Add locally right away for a snappy UI. If Supabase realtime echoes this
+  // insert back, the subscription de-dupes on id (see sbSubscribe).
+  tickets.unshift(ticket);
   saveTickets();
   updateCount();
   showToast(id,assignees);
@@ -861,7 +1374,8 @@ function resetForm(){
   document.getElementById('f-by-other').value=''; document.getElementById('f-by-other').classList.add('hidden');
   document.getElementById('t-schema').checked=false; document.getElementById('t-noindex').checked=false; document.getElementById('t-nofollow').checked=false;
   document.getElementById('schema-field').classList.add('hidden');
-  setCat('general');
+  document.getElementById('f-figma').value='';
+  setCat('dev');
   state.priority=null; document.querySelectorAll('#prio-seg .opt').forEach(o=>o.classList.remove('sel'));
   recompute();
 }
@@ -893,19 +1407,62 @@ let chipStatus='';
 function setStatusChip(s){
   chipStatus=s;
   document.querySelectorAll('#status-chips .chip').forEach(c=>c.classList.toggle('on',c.dataset.status===s));
-  renderLog();
+  renderLog(); updateFilterCount();
+}
+/* ---- filter popover ---- */
+function toggleFilterPop(ev){
+  if(ev) ev.stopPropagation();
+  const pop=document.getElementById('filter-pop');
+  const open=pop.classList.toggle('show');
+  document.getElementById('filter-toggle').setAttribute('aria-expanded',open?'true':'false');
+  if(open){
+    // close when clicking outside
+    setTimeout(()=>document.addEventListener('click', outsideFilterClose),0);
+  }else{
+    document.removeEventListener('click', outsideFilterClose);
+  }
+}
+function outsideFilterClose(e){
+  const pop=document.getElementById('filter-pop');
+  const btn=document.getElementById('filter-toggle');
+  if(!pop.contains(e.target) && !btn.contains(e.target)){
+    pop.classList.remove('show');
+    document.getElementById('filter-toggle').setAttribute('aria-expanded','false');
+    document.removeEventListener('click', outsideFilterClose);
+  }
+}
+function clearFilters(){
+  document.getElementById('filter-person').value='';
+  document.getElementById('filter-status').value='';
+  document.getElementById('filter-prio').value='';
+  document.getElementById('filter-search').value='';
+  chipStatus='';
+  document.querySelectorAll('#status-chips .chip').forEach(c=>c.classList.toggle('on',c.dataset.status===''));
+  renderLog(); updateFilterCount();
+}
+/* count how many filters are active, show a badge on the button */
+function updateFilterCount(){
+  let n=0;
+  if(document.getElementById('filter-person').value) n++;
+  if(document.getElementById('filter-status').value) n++;
+  if(document.getElementById('filter-prio').value) n++;
+  if(document.getElementById('filter-search').value.trim()) n++;
+  if(chipStatus) n++;
+  const badge=document.getElementById('filter-count');
+  if(badge){ badge.textContent=n; badge.style.display=n?'inline-block':'none'; }
 }
 function changeStatus(idx,newStatus){
   tickets[idx].status=newStatus;
   tickets[idx].statusUpdated=todayISO();
-  patchNotionStatus(tickets[idx]);
+  patchNotionStatus(tickets[idx]);   // n8n -> Notion
+  sbUpdateStatus(tickets[idx]);      // Supabase (broadcasts live to everyone)
   saveTickets();
   renderLog();
 }
 function deleteTicket(id){
   const t=tickets.find(x=>x.id===id);
   if(!t) return;
-  if(!confirm('Delete "'+t.task+'" from this log?\n\nThis only removes it from the local log on this browser — the Notion page is not affected.')) return;
+  if(!confirm('Remove "'+t.task+'" from YOUR view of the log?\n\nThis only hides it in this browser. It stays in the global Supabase log for everyone else, and the Notion page is not affected. (On next refresh it will reappear from the global log.)')) return;
   tickets=tickets.filter(x=>x.id!==id);
   saveTickets();
   updateCount();
@@ -922,7 +1479,10 @@ function renderLog(){
   const prio=document.getElementById('filter-prio').value;
   const q=document.getElementById('filter-search').value.trim().toLowerCase();
 
+  const wantDone = (status==='Done' || chipStatus==='Done');
   let rows=tickets.map((t,i)=>({t,i})).filter(({t})=>{
+    // Done tickets are hidden from the main log unless explicitly filtered for
+    if(t.status==='Done' && !wantDone) return false;
     if(person && !ticketAssignees(t).includes(person)) return false;
     if(status&&t.status!==status) return false;
     if(chipStatus&&t.status!==chipStatus) return false;
@@ -946,10 +1506,13 @@ function renderLog(){
     return dt.toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+rel;
   };
 
-  // group by assignedDate, newest first
+  // group by PRIORITY, ordered P0 -> P3
+  const PRIO_ORDER=['P0','P1','P2','P3'];
+  const PRIO_LABEL={P0:'Critical',P1:'High',P2:'Medium',P3:'Low'};
   const groups={};
-  rows.forEach(r=>{ const k=r.t.assignedDate||'—'; (groups[k]=groups[k]||[]).push(r); });
-  const dates=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  rows.forEach(r=>{ const k=r.t.priority||'—'; (groups[k]=groups[k]||[]).push(r); });
+  // keep known priorities in order, then any stragglers
+  const prios=PRIO_ORDER.filter(p=>groups[p]).concat(Object.keys(groups).filter(k=>!PRIO_ORDER.includes(k)));
 
   const rowHtml=({t,i})=>{
     const typeLabel=t.category==='dev'?t.devType:'General';
@@ -969,17 +1532,21 @@ function renderLog(){
       +'<div class="status-wrap" style="color:'+statusColor(t.status)+'">'
         +'<select class="status-sel" style="background:'+statusColor(t.status)+'" onchange="changeStatus('+i+',this.value)">'+opts+'</select>'
       +'</div>'
-      +'<div><button class="del-btn" title="Delete from this log" onclick="deleteTicket(\''+t.id+'\')">&times;</button></div>'
+      +'<div><button class="del-btn" title="Remove from your view" onclick="deleteTicket(\''+t.id+'\')">&times;</button></div>'
       +'</div>';
   };
 
   let html='';
-  dates.forEach(d=>{
-    html+='<div class="date-group">'
-      +'<div class="date-header">'+(d==='—'?'No date':fmtHeader(d))+' <span class="date-count">'+groups[d].length+'</span></div>'
+  prios.forEach(p=>{
+    const label = PRIO_LABEL[p] ? (p+' · '+PRIO_LABEL[p]) : p;
+    const badgeCls = PRIO_ORDER.includes(p) ? p : 'P3';
+    html+='<div class="prio-group">'
+      +'<div class="prio-header"><span class="p-badge '+badgeCls+'">'+p+'</span>'
+      +'<span class="p-label">'+(PRIO_LABEL[p]||'Other')+'</span>'
+      +'<span class="prio-count">'+groups[p].length+'</span></div>'
       +'<div class="tickets"><div class="thead">'
       +'<div>Task</div><div>Assignee</div><div>Assigned by</div><div>Assigned</div><div>Priority</div><div>Status</div><div></div></div>';
-    groups[d].forEach(r=>{ html+=rowHtml(r); });
+    groups[p].forEach(r=>{ html+=rowHtml(r); });
     html+='</div></div>';
   });
   body.innerHTML=html;
@@ -1003,6 +1570,12 @@ function loadWebhookUrl(){
 function openSettings(){
   document.getElementById('fallbackShow').textContent=WEBHOOK_FALLBACK;
   document.getElementById('webhookInput').value=(window.__WEBHOOK_URL||"");
+  document.getElementById('sbUrlInput').value=SB_URL||"";
+  document.getElementById('sbKeyInput').value=SB_ANON||"";
+  const st=document.getElementById('sbStatus');
+  st.innerHTML = usingSupabase
+    ? 'Global log: <b style="color:var(--brand-green)">connected</b>'
+    : (SB_URL&&SB_ANON ? 'Global log: keys saved, not yet connected — click Save to (re)connect.' : 'Global log: <b>local only</b> until keys are added.');
   document.getElementById('settingsModal').classList.add('show');
 }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
@@ -1010,13 +1583,41 @@ function saveWebhook(){
   const v=document.getElementById('webhookInput').value.trim();
   window.__WEBHOOK_URL = v || null;
   try{ if(v) localStorage.setItem(WEBHOOK_STORE_KEY,v); else localStorage.removeItem(WEBHOOK_STORE_KEY); }catch(e){}
-  // fire a test ping so n8n's "Listen for test event" catches it
+
+  // --- Supabase keys ---
+  const su=document.getElementById('sbUrlInput').value.trim();
+  const sk=document.getElementById('sbKeyInput').value.trim();
+  let sbChanged=false;
+  if(sk.includes('service_role')){
+    alert('That looks like the service_role key. Use the anon public key instead — the service_role key must never go in a web page.');
+  } else {
+    if(su!==(SB_URL||'') || sk!==(SB_ANON||'')) sbChanged=true;
+    SB_URL=su||null; SB_ANON=sk||null;
+    try{
+      if(SB_URL) localStorage.setItem(SB_URL_KEY,SB_URL); else localStorage.removeItem(SB_URL_KEY);
+      if(SB_ANON) localStorage.setItem(SB_ANON_KEY,SB_ANON); else localStorage.removeItem(SB_ANON_KEY);
+    }catch(e){}
+  }
+
   postWebhook({ event:"webhook.test", note:"Ping from Factors.ai ticket log", at:new Date().toISOString() });
   closeSettings();
   const t=document.getElementById('toast');
-  document.getElementById('toast-title').textContent="Webhook saved";
-  document.getElementById('toast-sub').textContent="Test ping sent to "+getWebhookUrl();
+  document.getElementById('toast-title').textContent="Settings saved";
+  document.getElementById('toast-sub').textContent = (SB_URL&&SB_ANON) ? "Connecting global log…" : "Webhook saved · global log is local only";
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400);
+
+  // (re)connect Supabase if keys present/changed
+  if(SB_URL && SB_ANON && sbChanged){
+    if(sbChannel && sbClient){ try{ sbClient.removeChannel(sbChannel); }catch(e){} }
+    sbChannel=null; sbClient=null;
+    sbInit().then(ok=>{
+      if(ok){
+        document.getElementById('toast-title').textContent="Global log connected";
+        document.getElementById('toast-sub').textContent="Live updates are on for everyone with these keys.";
+        document.getElementById('toast').classList.add('show'); setTimeout(()=>document.getElementById('toast').classList.remove('show'),3400);
+      }
+    });
+  }
 }
 function resetWebhook(){
   document.getElementById('webhookInput').value="";
@@ -1025,9 +1626,12 @@ function resetWebhook(){
 }
 
 loadWebhookUrl();
-loadTickets();
+loadSupabaseCfg();
+loadTickets();          // local cache first (instant paint / offline fallback)
 initUI();
 updateCount();
+// If Supabase keys exist, replace the local cache with the global log + go live.
+sbInit();
 </script>
 </body>
 </html>
