@@ -202,7 +202,7 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 .prio-count{font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:var(--ink-3);padding:1px 8px}
 
 .tickets{display:flex;flex-direction:column;border:var(--border);border-bottom:0}
-.thead,.trow{display:grid;grid-template-columns:2.2fr 1fr 1fr 1.05fr 80px 1.25fr 34px;gap:14px;align-items:center;padding:13px 18px;border-bottom:var(--border)}
+.thead,.trow{display:grid;grid-template-columns:2.2fr 1fr 1fr 1.05fr 80px 1.25fr;gap:14px;align-items:center;padding:13px 18px;border-bottom:var(--border)}
 .del-btn{border:1px solid var(--line-strong);background:#fff;color:var(--ink-4);width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;transition:.12s;padding:0}
 .del-btn:hover{background:var(--brand-red);border-color:var(--brand-red);color:#fff}
 .thead{background:var(--tint-teal);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
@@ -361,7 +361,7 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
           <div class="hint">Not in the list? Pick <b>Other</b> and type the name (e.g. someone from sales).</div>
         </div>
 
-        <div class="field">
+        <div class="field" id="cat-field" style="display:none">
           <label class="lbl">Request category <span class="req">*</span></label>
           <div class="seg" id="cat-seg">
             <div class="opt hidden" data-cat="general" onclick="setCat('general')">General request</div>
@@ -386,6 +386,12 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
           <label class="lbl">Assignee(s) <span class="req">*</span></label>
           <div class="people-pick" id="dev-people"></div>
           <div class="hint">Bugs &amp; fixes and enhancements can go to either or both devs.</div>
+        </div>
+
+        <div class="field hidden" id="content-field">
+          <label class="lbl">Content link <span class="req">*</span></label>
+          <input type="url" id="f-content" placeholder="https://&hellip;" oninput="recompute()"/>
+          <div class="hint">Required for Webflow and Framer builds. Paste the content link.</div>
         </div>
 
         <div class="field hidden" id="figma-field">
@@ -1169,8 +1175,10 @@ function setCat(cat){
   document.getElementById('dev-type-field').classList.toggle('hidden',cat!=='dev');
   document.getElementById('dev-assignee-field').classList.add('hidden');
   document.getElementById('seo-block').classList.add('hidden');
+  document.getElementById('content-field').classList.add('hidden');
   document.getElementById('figma-field').classList.add('hidden');
   document.getElementById('freq-field').classList.add('hidden');
+  document.getElementById('f-content').value='';
   document.getElementById('f-figma').value='';
   state.frequency=null; document.querySelectorAll('#freq-seg .opt').forEach(o=>o.classList.remove('sel'));
   document.querySelectorAll('#dev-tiles .tile').forEach(t=>t.classList.remove('sel'));
@@ -1186,10 +1194,11 @@ function setDevType(id){
   document.getElementById('dev-assignee-field').classList.toggle('hidden',!needsPick);
   document.getElementById('dev-assignee-hint').innerHTML = d.fixed?'Auto-assigned to <b>'+d.assignee+'</b>.':'Pick which dev should own this.';
   document.getElementById('seo-block').classList.toggle('hidden',!d.seo);
+  document.getElementById('content-field').classList.toggle('hidden',!d.figma);
   document.getElementById('figma-field').classList.toggle('hidden',!d.figma);
   document.getElementById('freq-field').classList.toggle('hidden',!d.frequency);
   if(!d.frequency){ state.frequency=null; document.querySelectorAll('#freq-seg .opt').forEach(o=>o.classList.remove('sel')); }
-  if(!d.figma){ document.getElementById('f-figma').value=''; }
+  if(!d.figma){ document.getElementById('f-content').value=''; document.getElementById('f-figma').value=''; }
   recompute();
 }
 function setFreq(f){
@@ -1291,6 +1300,7 @@ function validate(){
     if(d&&!d.fixed&&currentAssignees().length===0)e.push('dev-people');
     if(d&&d.seo){ ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(!val(f))e.push(f)});
       if(document.getElementById('t-schema').checked&&!val('f-schema'))e.push('f-schema'); }
+    if(d&&d.figma&&!val('f-content'))e.push('f-content');
     if(d&&d.figma&&!val('f-figma'))e.push('f-figma');
     if(d&&d.frequency&&!state.frequency)e.push('freq');
   }
@@ -1365,6 +1375,7 @@ function submitTicket(){
     by:currentBy(),
     byId:userId(currentBy()),                    // Notion user ID for Person column
     priority:state.priority, category:state.category, devType:d?d.name:null, notes:val('f-notes'),
+    contentLink:(d&&d.figma)?val('f-content'):null,
     figma:(d&&d.figma)?val('f-figma'):null,
     frequency:(d&&d.frequency)?state.frequency:null,
     attachments:attachmentsMeta,                 // stored copy = metadata only (no base64)
@@ -1454,6 +1465,7 @@ function resetForm(){
   document.getElementById('f-by-other').value=''; document.getElementById('f-by-other').classList.add('hidden');
   document.getElementById('t-schema').checked=false; document.getElementById('t-noindex').checked=false; document.getElementById('t-nofollow').checked=false;
   document.getElementById('schema-field').classList.add('hidden');
+  document.getElementById('f-content').value='';
   document.getElementById('f-figma').value='';
   setCat('dev');
   state.priority=null; document.querySelectorAll('#prio-seg .opt').forEach(o=>o.classList.remove('sel'));
@@ -1632,7 +1644,6 @@ function renderLog(){
       +'<div class="status-wrap" data-label="Status" style="color:'+statusColor(t.status)+'">'
         +'<select class="status-sel" style="background:'+statusColor(t.status)+'" onchange="changeStatus('+i+',this.value)">'+opts+'</select>'
       +'</div>'
-      +'<div class="del-cell"><button class="del-btn" title="Remove from your view" onclick="deleteTicket(\''+t.id+'\')">&times;</button></div>'
       +'</div>';
   };
 
@@ -1645,7 +1656,7 @@ function renderLog(){
       +'<span class="p-label">'+(PRIO_LABEL[p]||'Other')+'</span>'
       +'<span class="prio-count">'+groups[p].length+'</span></div>'
       +'<div class="tickets"><div class="thead">'
-      +'<div>Task</div><div>Assignee</div><div>Assigned by</div><div>Assigned</div><div>Priority</div><div>Status</div><div></div></div>';
+      +'<div>Task</div><div>Assignee</div><div>Assigned by</div><div>Assigned</div><div>Priority</div><div>Status</div></div>';
     groups[p].forEach(r=>{ html+=rowHtml(r); });
     html+='</div></div>';
   });
