@@ -210,8 +210,8 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 .trow:hover{background:var(--tint-cream)}
 .trow .ttask{font-weight:600;font-size:14px}
 .trow .ttask small{display:block;font-weight:400;font-size:11px;color:var(--ink-4);margin-top:2px;font-family:var(--font-mono)}
-.trow .ttask .notion-link{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:600;font-family:var(--font-mono);color:var(--brand-red);border-bottom:1px solid transparent;transition:border-color .12s}
-.trow .ttask .notion-link:hover{border-bottom-color:var(--brand-red)}
+.trow .ttask .task-notion-link{color:var(--black);border-bottom:1px solid var(--brand-red);transition:color .12s}
+.trow .ttask .task-notion-link:hover{color:var(--brand-red)}
 .trow .tcell{font-size:12.5px;color:var(--ink-2)}
 .trow .tcell .mut{color:var(--ink-5);font-size:11px}
 .trow .tcell .dl-tag{display:inline-block;margin-top:3px;font-family:var(--font-mono);font-size:10.5px;font-weight:700;padding:1px 7px;background:var(--tint-yellow);border:1px solid var(--brand-yellow-soft);color:var(--ink-2)}
@@ -1574,11 +1574,11 @@ function renderLog(){
       g.items.forEach(s=>{ opts+='<option value="'+s.name+'"'+(s.name===t.status?' selected':'')+'>'+s.name+'</option>'; });
       opts+='</optgroup>';
     });
-    const notionLink = t.notionUrl
-      ? '<a class="notion-link" href="'+escapeHtml(t.notionUrl)+'" target="_blank" rel="noopener">Notion url &#8599;</a>'
-      : '';
+    const taskName = t.notionUrl
+      ? '<a class="task-notion-link" href="'+escapeHtml(t.notionUrl)+'" target="_blank" rel="noopener">'+escapeHtml(t.task)+'</a>'
+      : escapeHtml(t.task);
     return '<div class="trow">'
-      +'<div class="ttask" data-label="Task">'+escapeHtml(t.task)+slug+'<small>'+typeLabel+'</small>'+notionLink+'</div>'
+      +'<div class="ttask" data-label="Task">'+taskName+slug+'<small>'+typeLabel+'</small></div>'
       +'<div class="tcell" data-label="Assignee">'+escapeHtml(ticketAssignees(t).join(', '))+'</div>'
       +'<div class="tcell" data-label="Assigned by">'+escapeHtml(ticketBy(t).join(', '))+'</div>'
       +'<div class="tcell" data-label="Deadline">'+deadlineCell+'</div>'
