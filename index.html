@@ -212,6 +212,8 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 .trow .ttask small{display:block;font-weight:400;font-size:11px;color:var(--ink-4);margin-top:2px;font-family:var(--font-mono)}
 .trow .tcell{font-size:12.5px;color:var(--ink-2)}
 .trow .tcell .mut{color:var(--ink-5);font-size:11px}
+.trow .tcell .dl-tag{display:inline-block;margin-top:3px;font-family:var(--font-mono);font-size:10.5px;font-weight:700;padding:1px 7px;background:var(--tint-yellow);border:1px solid var(--brand-yellow-soft);color:var(--ink-2)}
+.trow .tcell .dl-tag.overdue{background:var(--tint-red);border-color:var(--brand-red);color:var(--brand-red)}
 .type-tag{display:inline-block;padding:2px 8px;font-size:10.5px;font-weight:700;background:var(--tint-teal);border:1px solid var(--brand-teal);color:var(--ink-2);white-space:nowrap}
 .type-tag.dev{background:var(--tint-red);border-color:var(--brand-red);color:var(--brand-red)}
 
@@ -356,9 +358,13 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
 
         <div class="field">
           <label class="lbl">Assigned by <span class="req">*</span></label>
-          <select id="f-by" onchange="toggleByOther();recompute()"><option value="">Select&hellip;</option></select>
-          <input type="text" id="f-by-other" class="hidden" placeholder="Type the requester's name" style="margin-top:8px" oninput="recompute()"/>
-          <div class="hint">Not in the list? Pick <b>Other</b> and type the name (e.g. someone from sales).</div>
+          <div class="people-pick" id="by-people"></div>
+          <label class="p-opt" id="by-other-opt" style="display:flex;align-items:center;gap:9px;border:1px solid var(--line-strong);padding:9px 12px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink-2);margin-top:8px">
+            <input type="checkbox" id="by-other-toggle" style="width:16px;height:16px;accent-color:var(--brand-red);flex-shrink:0;margin:0" onchange="toggleByOther();recompute()">
+            <span>Other (someone not listed, e.g. sales)</span>
+          </label>
+          <input type="text" id="f-by-other" class="hidden" placeholder="Type the requester's name(s), comma-separated" style="margin-top:8px" oninput="recompute()"/>
+          <div class="hint">Pick one or more requesters. Not in the list? Tick <b>Other</b> and type the name(s).</div>
         </div>
 
         <div class="field" id="cat-field" style="display:none">
@@ -417,6 +423,12 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
             <div class="opt" data-p="P2" onclick="setPrio('P2')">P2 · Medium</div>
             <div class="opt" data-p="P3" onclick="setPrio('P3')">P3 · Low</div>
           </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Deadline <span style="color:var(--ink-5);font-weight:400">(optional)</span></label>
+          <input type="date" id="f-deadline" oninput="recompute()"/>
+          <div class="hint">Target completion date. Leave blank if there&rsquo;s no fixed deadline.</div>
         </div>
 
         <div class="field">
@@ -488,6 +500,7 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         <div class="sum-row"><span class="k">Assignee(s)</span><span class="v sum-empty" id="s-assignee">&mdash;</span></div>
         <div class="sum-row"><span class="k">Assigned by</span><span class="v sum-empty" id="s-by">&mdash;</span></div>
         <div class="sum-row"><span class="k">Priority</span><span class="v sum-empty" id="s-prio">&mdash;</span></div>
+        <div class="sum-row" id="s-deadline-row" style="display:none"><span class="k">Deadline</span><span class="v" id="s-deadline">&mdash;</span></div>
         <div class="sum-row" id="s-attach-row" style="display:none"><span class="k">Attachments</span><span class="v" id="s-attach">0</span></div>
         <div class="sum-row" id="s-seo-row" style="display:none"><span class="k">SEO fields</span><span class="v" id="s-seo">0 / 4</span></div>
         <div class="sum-row" id="s-freq-row" style="display:none"><span class="k">Frequency</span><span class="v" id="s-freq">&mdash;</span></div>
@@ -589,17 +602,11 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 
 /* =======================================================================
    LOGO LOADER — plays on every page load, then removes itself.
-   The password gate is NO LONGER part of this flow. The loader now runs
-   straight through the assemble -> hold -> white-wipe animation and reveals
-   the RAISE page underneath. The ticket log is protected separately (see the
-   pw-gate logic further down), and only when the user opens the log tab.
    ======================================================================= */
 (function runLogoLoader(){
   const el = document.getElementById("logo-loader");
   if(!el) return;
 
-  // If Three.js fails to load (offline / CDN blocked), don't trap the user
-  // behind a red screen — just remove the overlay so the form is usable.
   const bail = () => { try{ el.remove(); }catch(e){ el.style.display="none"; } };
 
   const svg = `<svg width="147" height="249" viewBox="0 0 147 249" xmlns="http://www.w3.org/2000/svg">
@@ -671,8 +678,6 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
       p.position.z = finals[i].z + off.z*(1-ease);
     });
 
-    // HOLD PHASE: logo assembled — settle briefly, then continue automatically.
-    // (No password wait here anymore — the gate moved to the log tab.)
     if(phase === 0 && t > 1.7){
       phase = 1;
     }
@@ -715,8 +720,6 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
   }
   raf = requestAnimationFrame(animate);
 
-  // Safety net: if Three.js renders but the animation somehow never completes
-  // within ~9s, remove the overlay so the user is never stuck on the loader.
   setTimeout(()=>{ if(!revealed){ bail(); } }, 9000);
 
   function onResize(){
@@ -728,7 +731,6 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 })();
 </script>
 <script type="module">
-// If the module above throws on import (e.g. CDN blocked), remove the overlay.
 window.addEventListener("error", (e)=>{
   const el = document.getElementById("logo-loader");
   if(el && e.message && /three|esm\.sh|import/i.test(e.message)) el.remove();
@@ -742,6 +744,7 @@ window.addEventListener("error", (e)=>{
 const PEOPLE = [
   "Mansi Peswani","Aditi Shinde","Darshan Divakar","Tushar Chaudhary",
   "Vrushti Oza","Amith Manoj","Nantha","Subiksha","Vasant Suraj",
+  "Vishnu Baliga",
 ];
 
 /* Notion workspace user IDs — used to populate Person-type columns
@@ -756,6 +759,7 @@ const NOTION_USER_ID = {
   "Nantha":           "26ad872b-594c-8158-b1c5-0002d07ae75e",
   "Subiksha":         "15ed872b-594c-81e6-8396-000248ee6194",
   "Vasant Suraj":     "304d872b-594c-81d9-bd50-0002a18eeaf2",
+  "Vishnu Baliga":    "64ac9b47-c0ba-4a3a-b928-063ffb64b2b2",
 };
 const userId = name => NOTION_USER_ID[name] || null;
 
@@ -800,21 +804,12 @@ const DEV_PEOPLE = ["Tushar Chaudhary","Vasant Suraj"];
 
 /* ============================================================
    LOG ACCESS GATE (cosmetic) — protects ONLY the ticket log.
-   The raise-a-ticket page is open to everyone. Opening the log
-   requires name + password (name -> name@factors). Once entered,
-   the session is REMEMBERED in this browser (localStorage) so a
-   refresh keeps you signed in until you click "Lock log".
-   NOTE: this remains cosmetic, not real security — the markup and
-   the Supabase anon key are in the page. See the doc's security note.
    ============================================================ */
 const LOG_AUTH_KEY = "factors_log_auth_v1";
-/* The ONLY credential that opens the ticket log. NOTE: still cosmetic — anything
-   hardcoded in the page is visible to anyone who opens the file / views source. */
 const LOG_FIXED_USER = "marketing@factors.ai";
 const LOG_FIXED_PASS = "Factors_marketing!@#$%";
 let logUnlocked = false;
 
-/* persist the signed-in identity so refresh keeps you in */
 function saveLogAuth(name){
   try{ localStorage.setItem(LOG_AUTH_KEY, JSON.stringify({ name, at:Date.now() })); }catch(e){}
 }
@@ -829,12 +824,10 @@ function loadLogAuth(){
 function clearLogAuth(){
   try{ localStorage.removeItem(LOG_AUTH_KEY); }catch(e){}
 }
-/* show/hide the "Lock log" button in the top bar */
 function reflectAuthUI(){
   const b=document.getElementById('logoutBtn');
   if(b) b.classList.toggle('show', logUnlocked);
 }
-/* user clicked "Lock log" — forget the session and bounce to the raise view */
 function logoutLog(){
   logUnlocked=false;
   clearLogAuth();
@@ -846,14 +839,9 @@ function logoutLog(){
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-/* Build + show the password card. Resolves true on success, false on cancel.
-   Used exclusively when the user tries to open the ticket log. */
 function requireLogAuth(){
   return new Promise((resolve)=>{
-    // already open? resolve immediately
     if(logUnlocked){ resolve(true); return; }
-
-    // guard against a double-open of the gate
     if(document.getElementById('pw-gate')){ return; }
 
     const gate = document.createElement("div");
@@ -891,7 +879,6 @@ function requireLogAuth(){
     requestAnimationFrame(()=>gate.classList.add("show"));
     setTimeout(()=>{ try{ idEl.focus(); }catch(e){} }, 60);
 
-    // password visibility toggle
     const EYE_ON  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
     const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M6.61 6.61A18.5 18.5 0 0 0 1 12s4 8 11 8a9.12 9.12 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
     eyeBtn.addEventListener("click", ()=>{
@@ -920,12 +907,10 @@ function requireLogAuth(){
       const name = rawName.toLowerCase();
       const pass = (passEl.value||"");
       if(!name){ fail(); return; }
-      // ONLY the fixed shared credential is accepted: exact username (case-insensitive)
-      // + exact password (case-sensitive). The old name->name@factors rule is removed.
       const ok = name === LOG_FIXED_USER.toLowerCase() && pass === LOG_FIXED_PASS;
       if(ok){
         logUnlocked = true;
-        saveLogAuth(rawName);   // remember across refreshes
+        saveLogAuth(rawName);
         reflectAuthUI();
         close();
         resolve(true);
@@ -949,16 +934,9 @@ function requireLogAuth(){
 
 /* ============================================================
    SUPABASE — global ticket log (read/write/live)
-   Tickets are DUAL-WRITTEN: to n8n (-> Notion) AND to Supabase.
-   Supabase is the source of truth for the shared, live log.
-   Keys are entered once in Settings and saved in this browser.
    ============================================================ */
 const SB_URL_KEY = "factors_sb_url";
 const SB_ANON_KEY = "factors_sb_anon";
-/* Built-in defaults so the file is plug-and-play when shared: anyone who opens
-   it connects to the global log with no setup. The anon key is public by design
-   (it only works within the table's RLS policies) — safe to embed, unlike the
-   service_role key. The Settings gear can still override these per browser. */
 const SB_URL_DEFAULT  = "https://mpjidlybzshrulyztmpw.supabase.co";
 const SB_ANON_DEFAULT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wamlkbHlienNocnVseXp0bXB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjA3MTgsImV4cCI6MjA5OTU5NjcxOH0._bjzEAIaj6YoSSeIgRFTKrEj_OKXELhtpEY9drk3tKE";
 let SB_URL  = null;
@@ -966,7 +944,7 @@ let SB_ANON = null;
 let sbClient = null;
 let sbCreateClient = null;
 let sbChannel = null;
-let usingSupabase = false;   // true once a client is live
+let usingSupabase = false;
 
 function loadSupabaseCfg(){
   try{
@@ -976,7 +954,6 @@ function loadSupabaseCfg(){
     SB_URL = SB_URL_DEFAULT || null; SB_ANON = SB_ANON_DEFAULT || null;
   }
 }
-/* obtain createClient: ESM import first, UMD <script> fallback */
 function sbLoadUmd(){
   return new Promise((resolve,reject)=>{
     if(window.supabase && window.supabase.createClient){ resolve(window.supabase.createClient); return; }
@@ -992,7 +969,6 @@ async function sbEnsureCreate(){
   try{ const m=await import('https://esm.sh/@supabase/supabase-js@2'); if(m&&m.createClient){ sbCreateClient=m.createClient; return sbCreateClient; } }catch(e){}
   sbCreateClient=await sbLoadUmd(); return sbCreateClient;
 }
-/* returns a live client or null (never throws) */
 async function getSupabase(){
   if(sbClient) return sbClient;
   if(!SB_URL || !SB_ANON) return null;
@@ -1009,9 +985,11 @@ function ticketToRow(t){
   return {
     id:t.id, task:t.task,
     assignees:ticketAssignees(t), assignee:t.assignee||ticketAssignees(t).join(', '),
-    assignee_ids:t.assigneeIds||[], requested_by:t.by||null, by_id:t.byId||null,
+    assignee_ids:t.assigneeIds||[],
+    requested_by:t.by||null, requested_by_list:t.byList||ticketBy(t), by_id:t.byId||null, by_ids:t.byIds||[],
     priority:t.priority, category:t.category, dev_type:t.devType||null,
     notes:t.notes||null, figma:t.figma||null, frequency:t.frequency||null,
+    deadline:t.deadline||null,
     seo:t.seo||null, attachments:t.attachments||[],
     status:t.status||'Newly Assigned',
     assigned_date:t.assignedDate||null, status_updated:t.statusUpdated||null,
@@ -1023,9 +1001,11 @@ function rowToTicket(r){
     id:r.id, task:r.task,
     assignees:Array.isArray(r.assignees)?r.assignees:[], assignee:r.assignee||'',
     assigneeIds:Array.isArray(r.assignee_ids)?r.assignee_ids:[],
-    by:r.requested_by||'', byId:r.by_id||null,
+    by:r.requested_by||'', byList:Array.isArray(r.requested_by_list)?r.requested_by_list:(r.requested_by?String(r.requested_by).split(',').map(s=>s.trim()).filter(Boolean):[]),
+    byId:r.by_id||null, byIds:Array.isArray(r.by_ids)?r.by_ids:[],
     priority:r.priority, category:r.category, devType:r.dev_type||null,
     notes:r.notes||'', figma:r.figma||null, frequency:r.frequency||null,
+    deadline:r.deadline||null,
     seo:r.seo||null, attachments:Array.isArray(r.attachments)?r.attachments:[],
     status:r.status||'Newly Assigned',
     assignedDate:r.assigned_date||(r.created_at?String(r.created_at).slice(0,10):todayISO()),
@@ -1033,19 +1013,16 @@ function rowToTicket(r){
   };
 }
 
-/* insert a ticket into Supabase (fire-and-forget, logged on error) */
 async function sbInsertTicket(t){
   const sb=await getSupabase(); if(!sb) return;
   const { error }=await sb.from('tickets').insert(ticketToRow(t));
   if(error) console.warn('Supabase insert failed:',error.message);
 }
-/* patch status in Supabase */
 async function sbUpdateStatus(t){
   const sb=await getSupabase(); if(!sb) return;
   const { error }=await sb.from('tickets').update({ status:t.status, status_updated:t.statusUpdated }).eq('id',t.id);
   if(error) console.warn('Supabase status update failed:',error.message);
 }
-/* pull the whole log from Supabase into `tickets` and render */
 async function sbLoadAll(){
   const sb=await getSupabase(); if(!sb) return false;
   const { data, error }=await sb.from('tickets').select('*').order('created_at',{ascending:false}).limit(500);
@@ -1055,7 +1032,6 @@ async function sbLoadAll(){
   if(document.getElementById('view-log').classList.contains('active')) renderLog();
   return true;
 }
-/* subscribe to live changes so the log updates for everyone */
 async function sbSubscribe(){
   const sb=await getSupabase(); if(!sb || sbChannel) return;
   sbChannel = sb.channel('tickets-live-app')
@@ -1073,7 +1049,6 @@ async function sbSubscribe(){
     })
     .subscribe();
 }
-/* called after keys are saved, or on boot if keys exist */
 async function sbInit(){
   sbClient=null; sbChannel=null; usingSupabase=false;
   const sb=await getSupabase();
@@ -1106,7 +1081,6 @@ function fillPeople(sel,ph){
   sel.innerHTML='<option value="">'+ph+'</option>';
   PEOPLE.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
 }
-/* build a checkbox list of people into a container */
 function fillPeoplePick(container,names){
   container.innerHTML='';
   names.forEach(n=>{
@@ -1117,11 +1091,9 @@ function fillPeoplePick(container,names){
     lab.appendChild(cb); lab.appendChild(span); container.appendChild(lab);
   });
 }
-/* read checked names from a picker container */
 function pickedNames(container){
   return Array.from(container.querySelectorAll('input:checked')).map(cb=>cb.value);
 }
-/* clear all checks in a picker container */
 function clearPick(container){
   container.querySelectorAll('input:checked').forEach(cb=>{ cb.checked=false; cb.closest('.p-opt').classList.remove('sel'); });
 }
@@ -1129,10 +1101,7 @@ function clearPick(container){
 function initUI(){
   fillPeoplePick(document.getElementById('gen-people'),PEOPLE);
   fillPeoplePick(document.getElementById('dev-people'),DEV_PEOPLE);
-  fillPeople(document.getElementById('f-by'),'Select…');
-  // add "Other" so non-listed requesters (e.g. sales) can type a name
-  const byOther=document.createElement('option'); byOther.value='__other__'; byOther.textContent='Other (type a name)…';
-  document.getElementById('f-by').appendChild(byOther);
+  fillPeoplePick(document.getElementById('by-people'),PEOPLE);   // multi-select "Assigned by"
 
   const tw=document.getElementById('dev-tiles'); tw.innerHTML='';
   DEV_TYPES.forEach(d=>{
@@ -1211,17 +1180,15 @@ function setPrio(p){
   document.querySelectorAll('#prio-seg .opt').forEach(o=>o.classList.toggle('sel',o.dataset.p===p));
   recompute();
 }
-/* ---- attachments (Option A: files carried as base64 in the webhook payload,
-   so n8n can upload them straight to the Notion page's Files property) ---- */
-const MAX_ATTACH_BYTES = 20 * 1024 * 1024;   // Notion single-request upload cap = 20 MB/file
-let attachmentsReading = 0;                  // how many files are still encoding
+/* ---- attachments ---- */
+const MAX_ATTACH_BYTES = 20 * 1024 * 1024;
+let attachmentsReading = 0;
 
 function fmtBytes(b){
   if(b<1024) return b+' B';
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
   return (b/1048576).toFixed(1)+' MB';
 }
-/* read a File as base64 WITHOUT the "data:<mime>;base64," prefix */
 function fileToBase64(file){
   return new Promise((resolve,reject)=>{
     const r=new FileReader();
@@ -1232,9 +1199,7 @@ function fileToBase64(file){
 }
 function addAttachments(fileList){
   Array.from(fileList).forEach(f=>{
-    // skip exact duplicates (same name + size)
     if(attachments.some(a=>a.name===f.name && a.size===f.size)) return;
-    // skip anything Notion can't take in a single upload request
     if(f.size>MAX_ATTACH_BYTES){
       alert('"'+f.name+'" is '+fmtBytes(f.size)+'. Max per file is 20 MB (Notion upload limit) — skipped.');
       return;
@@ -1270,21 +1235,28 @@ function renderAttachments(){
 
 function toggleSchema(){ document.getElementById('schema-field').classList.toggle('hidden',!document.getElementById('t-schema').checked); }
 function slugify(){ const el=document.getElementById('f-slug'); el.value=el.value.toLowerCase().replace(/[^a-z0-9\-\/]+/g,'-').replace(/^-+|-+$/g,''); }
-/* returns an array of assignee names (possibly several) */
 function currentAssignees(){
   if(state.category==='general') return pickedNames(document.getElementById('gen-people'));
   const d=DEV_TYPES.find(x=>x.id===state.devType); if(!d) return [];
   return d.fixed ? [d.assignee] : pickedNames(document.getElementById('dev-people'));
 }
+/* toggle the "Other" free-text requester field */
 function toggleByOther(){
-  const isOther=document.getElementById('f-by').value==='__other__';
-  document.getElementById('f-by-other').classList.toggle('hidden',!isOther);
+  const on=document.getElementById('by-other-toggle').checked;
+  const opt=document.getElementById('by-other-opt');
+  if(opt) opt.classList.toggle('sel',on);
+  document.getElementById('f-by-other').classList.toggle('hidden',!on);
 }
-/* resolved "assigned by" value: the typed name if Other, else the dropdown value */
-function currentBy(){
-  const sel=document.getElementById('f-by').value;
-  return sel==='__other__' ? document.getElementById('f-by-other').value.trim() : sel;
+/* resolved list of "assigned by" names: picked people + any typed "Other" names */
+function currentByList(){
+  const names=pickedNames(document.getElementById('by-people'));
+  if(document.getElementById('by-other-toggle').checked){
+    const extra=(document.getElementById('f-by-other').value||'').trim();
+    if(extra) extra.split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>{ if(!names.includes(n)) names.push(n); });
+  }
+  return names;
 }
+function currentBy(){ return currentByList().join(', '); }
 
 /* ============================================================
    VALIDATION + SUMMARY
@@ -1292,7 +1264,7 @@ function currentBy(){
 function val(id){ return (document.getElementById(id).value||'').trim(); }
 function validate(){
   const e=[];
-  if(!val('f-task'))e.push('f-task'); if(!currentBy())e.push('f-by'); if(!state.priority)e.push('prio');
+  if(!val('f-task'))e.push('f-task'); if(currentByList().length===0)e.push('by-people'); if(!state.priority)e.push('prio');
   if(state.category==='general'){ if(currentAssignees().length===0)e.push('gen-people'); }
   else{
     if(!state.devType)e.push('dev-type');
@@ -1308,6 +1280,8 @@ function validate(){
 }
 function seoFilledCount(){ let c=0; ['f-mtitle','f-mdesc','f-canon','f-slug'].forEach(f=>{if(val(f))c++}); return c; }
 
+function fmtDate(d){ return new Date(d+'T00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}); }
+
 function recompute(){
   const set=(id,v)=>{const e=document.getElementById(id);const empty=!v;e.textContent=v||'—';e.classList.toggle('sum-empty',empty);};
   set('s-task',val('f-task'));
@@ -1316,6 +1290,11 @@ function recompute(){
   set('s-type',state.category==='dev'?(d?d.name:''):'General');
   set('s-assignee',currentAssignees().join(', '));
   set('s-by',currentBy());
+
+  const dl=val('f-deadline');
+  const dlRow=document.getElementById('s-deadline-row');
+  if(dl){ dlRow.style.display='flex'; document.getElementById('s-deadline').textContent=fmtDate(dl); }
+  else dlRow.style.display='none';
 
   const attachRow=document.getElementById('s-attach-row');
   if(attachments.length){ attachRow.style.display='flex'; document.getElementById('s-attach').textContent=attachments.length+(attachments.length===1?' file':' files'); }
@@ -1344,7 +1323,7 @@ function flagInvalids(errs){
   document.querySelectorAll('.pick-invalid').forEach(e=>e.classList.remove('pick-invalid'));
   errs.forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
-    if(id==='gen-people'||id==='dev-people'){ el.classList.add('pick-invalid'); }
+    if(id==='gen-people'||id==='dev-people'||id==='by-people'){ el.classList.add('pick-invalid'); }
     else if(el.tagName!=='DIV'){ el.classList.add('invalid'); }
   });
 }
@@ -1353,34 +1332,35 @@ function todayISO(){ return new Date().toISOString().slice(0,10); }
 function submitTicket(){
   const errs=validate();
   if(errs.length){flagInvalids(errs);document.getElementById('failNote').style.display='block';return;}
-  if(attachmentsReading>0){ return; }   // still encoding files — button is disabled anyway
+  if(attachmentsReading>0){ return; }
   document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
 
   const d=DEV_TYPES.find(x=>x.id===state.devType);
   const assignees=currentAssignees();
+  const byList=currentByList();
   const id='FAC-'+(seq++);
 
-  // only files that finished encoding cleanly
   const usable=attachments.filter(a=>a.data && !a.error);
-  // metadata-only copy for the LOCAL log (base64 would blow the ~5 MB localStorage quota)
   const attachmentsMeta=usable.map(a=>({name:a.name,size:a.size,type:a.type}));
-  // FULL copy WITH base64 content — sent to n8n so it can upload to Notion
   const attachmentsFull=usable.map(a=>({name:a.name,size:a.size,type:a.type,data:a.data}));
 
   const ticket={
     id, task:val('f-task'),
-    assignees,                                   // array of names
-    assignee:assignees.join(', '),               // legacy comma-joined string
-    assigneeIds:assignees.map(userId).filter(Boolean),  // array of Notion user IDs for the Person column
-    by:currentBy(),
-    byId:userId(currentBy()),                    // Notion user ID for Person column
+    assignees,
+    assignee:assignees.join(', '),
+    assigneeIds:assignees.map(userId).filter(Boolean),
+    by:byList.join(', '),                         // legacy comma-joined string
+    byList,                                       // array of requester names
+    byId:userId(byList[0]) || null,               // legacy single id (first requester)
+    byIds:byList.map(userId).filter(Boolean),     // array of Notion user IDs for the Person column
     priority:state.priority, category:state.category, devType:d?d.name:null, notes:val('f-notes'),
     contentLink:(d&&d.figma)?val('f-content'):null,
     figma:(d&&d.figma)?val('f-figma'):null,
     frequency:(d&&d.frequency)?state.frequency:null,
-    attachments:attachmentsMeta,                 // stored copy = metadata only (no base64)
-    assignedDate:todayISO(),               // date the ticket was assigned
-    status:"Newly Assigned",               // initial status
+    deadline:val('f-deadline')||null,             // optional deadline
+    attachments:attachmentsMeta,
+    assignedDate:todayISO(),
+    status:"Newly Assigned",
     statusUpdated:todayISO(),
     seo:(d&&d.seo)?{
       metaTitle:val('f-mtitle'), metaDescription:val('f-mdesc'),
@@ -1391,10 +1371,8 @@ function submitTicket(){
     }:null,
   };
 
-  pushToNotion(ticket, attachmentsFull);   // webhook -> n8n -> Notion (base64 payload)
-  sbInsertTicket(ticket);                  // Supabase -> global live log
-  // Add locally right away for a snappy UI. If Supabase realtime echoes this
-  // insert back, the subscription de-dupes on id (see sbSubscribe).
+  pushToNotion(ticket, attachmentsFull);
+  sbInsertTicket(ticket);
   tickets.unshift(ticket);
   saveTickets();
   updateCount();
@@ -1402,17 +1380,7 @@ function submitTicket(){
   resetForm();
 }
 
-/* ---- n8n WEBHOOK INTEGRATION -----------------------------------------
-   Every ticket (and every status change) is POSTed to an n8n webhook.
-   The URL is editable from the UI (gear icon, top right) and persists
-   in this browser. If never set, it falls back to WEBHOOK_FALLBACK.
-   Payload shape:
-     { event:"ticket.created" | "ticket.status_changed", ...ticket }
-   Attachments on ticket.created are sent as:
-     attachments: [ { name, size, type, data } ]   // data = base64, no data: prefix
-   so the n8n flow can push the bytes into the Notion page's Files property
-   via Notion's file-upload API (create upload -> send bytes -> attach id).
------------------------------------------------------------------------ */
+/* ---- n8n WEBHOOK INTEGRATION ---- */
 const WEBHOOK_FALLBACK = "https://n8n-api.factors.app/webhook/ticket";
 
 function getWebhookUrl(){
@@ -1424,9 +1392,6 @@ function postWebhook(payload){
   if(!url){ console.log("[Ticket Log] no webhook url set — payload:",payload); return Promise.resolve(); }
   const body = JSON.stringify(payload);
 
-  // Primary: normal CORS request with JSON content-type. Works when the n8n
-  // webhook has Allowed Origins (CORS) set (e.g. "*"). The browser does a
-  // preflight; n8n answers it; the request goes through and we can read the response.
   return fetch(url, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -1435,9 +1400,6 @@ function postWebhook(payload){
   })
   .then(r=>{ if(!r.ok) console.warn("Webhook responded "+r.status); return r; })
   .catch(()=>{
-    // Fallback: send as text/plain. This is a CORS "simple request" — NO
-    // preflight — so it goes through even if CORS headers aren't configured.
-    // n8n still receives the raw JSON string in the body.
     return fetch(url, {
       method:"POST",
       headers:{ "Content-Type":"text/plain;charset=UTF-8" },
@@ -1449,7 +1411,6 @@ function postWebhook(payload){
 
 function pushToNotion(t, attachmentsWithData){
   const {_notionPageId, ...clean}=t;
-  // send the base64 copy if provided, else fall back to whatever's on the ticket
   postWebhook({ event:"ticket.created", ...clean, attachments: attachmentsWithData || clean.attachments || [] });
 }
 
@@ -1458,11 +1419,13 @@ function patchNotionStatus(t){
 }
 
 function resetForm(){
-  ['f-task','f-notes','f-mtitle','f-mdesc','f-canon','f-slug','f-schema'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-by').value='';
+  ['f-task','f-notes','f-deadline','f-mtitle','f-mdesc','f-canon','f-slug','f-schema'].forEach(id=>document.getElementById(id).value='');
   clearPick(document.getElementById('gen-people')); clearPick(document.getElementById('dev-people'));
-  attachments=[]; renderAttachments();
+  clearPick(document.getElementById('by-people'));
+  document.getElementById('by-other-toggle').checked=false;
+  document.getElementById('by-other-opt').classList.remove('sel');
   document.getElementById('f-by-other').value=''; document.getElementById('f-by-other').classList.add('hidden');
+  attachments=[]; renderAttachments();
   document.getElementById('t-schema').checked=false; document.getElementById('t-noindex').checked=false; document.getElementById('t-nofollow').checked=false;
   document.getElementById('schema-field').classList.add('hidden');
   document.getElementById('f-content').value='';
@@ -1483,27 +1446,21 @@ function updateCount(){ const c=tickets.length; document.getElementById('tab-cou
 
 /* ============================================================
    VIEW SWITCH
-   The raise view is always open. Switching to the log requires
-   auth (prompts if not already unlocked); cancelling keeps you
-   on the raise view.
    ============================================================ */
 function switchView(v){
   if(v==='log'){
-    // gate the log behind auth
     if(!logUnlocked){
-      requireLogAuth().then(ok=>{ if(ok) showLog(); /* else: stay on raise */ });
+      requireLogAuth().then(ok=>{ if(ok) showLog(); });
       return;
     }
     showLog();
     return;
   }
-  // raise view — always accessible
   document.getElementById('view-raise').classList.add('active');
   document.getElementById('view-log').classList.remove('active');
   document.getElementById('tab-raise').classList.add('active');
   document.getElementById('tab-log').classList.remove('active');
 }
-/* actually reveal the log (only called once auth passed) */
 function showLog(){
   document.getElementById('view-raise').classList.remove('active');
   document.getElementById('view-log').classList.add('active');
@@ -1521,14 +1478,12 @@ function setStatusChip(s){
   document.querySelectorAll('#status-chips .chip').forEach(c=>c.classList.toggle('on',c.dataset.status===s));
   renderLog(); updateFilterCount();
 }
-/* ---- filter popover ---- */
 function toggleFilterPop(ev){
   if(ev) ev.stopPropagation();
   const pop=document.getElementById('filter-pop');
   const open=pop.classList.toggle('show');
   document.getElementById('filter-toggle').setAttribute('aria-expanded',open?'true':'false');
   if(open){
-    // close when clicking outside
     setTimeout(()=>document.addEventListener('click', outsideFilterClose),0);
   }else{
     document.removeEventListener('click', outsideFilterClose);
@@ -1552,7 +1507,6 @@ function clearFilters(){
   document.querySelectorAll('#status-chips .chip').forEach(c=>c.classList.toggle('on',c.dataset.status===''));
   renderLog(); updateFilterCount();
 }
-/* count how many filters are active, show a badge on the button */
 function updateFilterCount(){
   let n=0;
   if(document.getElementById('filter-person').value) n++;
@@ -1566,8 +1520,8 @@ function updateFilterCount(){
 function changeStatus(idx,newStatus){
   tickets[idx].status=newStatus;
   tickets[idx].statusUpdated=todayISO();
-  patchNotionStatus(tickets[idx]);   // n8n -> Notion
-  sbUpdateStatus(tickets[idx]);      // Supabase (broadcasts live to everyone)
+  patchNotionStatus(tickets[idx]);
+  sbUpdateStatus(tickets[idx]);
   saveTickets();
   renderLog();
 }
@@ -1593,9 +1547,8 @@ function renderLog(){
 
   const wantDone = (status==='Done' || chipStatus==='Done');
   let rows=tickets.map((t,i)=>({t,i})).filter(({t})=>{
-    // Done tickets are hidden from the main log unless explicitly filtered for
     if(t.status==='Done' && !wantDone) return false;
-    if(person && !ticketAssignees(t).includes(person)) return false;
+    if(person && !ticketAssignees(t).includes(person) && !ticketBy(t).includes(person)) return false;
     if(status&&t.status!==status) return false;
     if(chipStatus&&t.status!==chipStatus) return false;
     if(prio&&t.priority!==prio) return false;
@@ -1608,27 +1561,24 @@ function renderLog(){
   if(!rows.length){ body.innerHTML='<div class="empty-log"><div class="marker">nothing matches &rarr;</div><p>No tickets for this filter. Try clearing it.</p></div>'; return; }
 
   const fmt=d=>new Date(d+'T00:00').toLocaleDateString('en-US',{day:'numeric',month:'short'});
-  const fmtHeader=d=>{
-    const dt=new Date(d+'T00:00');
-    const today=new Date(); today.setHours(0,0,0,0);
-    const diff=Math.round((today-dt)/86400000);
-    let rel='';
-    if(diff===0) rel=' · Today';
-    else if(diff===1) rel=' · Yesterday';
-    return dt.toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+rel;
-  };
 
-  // group by PRIORITY, ordered P0 -> P3
   const PRIO_ORDER=['P0','P1','P2','P3'];
   const PRIO_LABEL={P0:'Critical',P1:'High',P2:'Medium',P3:'Low'};
   const groups={};
   rows.forEach(r=>{ const k=r.t.priority||'—'; (groups[k]=groups[k]||[]).push(r); });
-  // keep known priorities in order, then any stragglers
   const prios=PRIO_ORDER.filter(p=>groups[p]).concat(Object.keys(groups).filter(k=>!PRIO_ORDER.includes(k)));
+
+  const todayMid=new Date(); todayMid.setHours(0,0,0,0);
 
   const rowHtml=({t,i})=>{
     const typeLabel=t.category==='dev'?t.devType:'General';
     const slug=t.seo?'<small>/'+t.seo.slug+'</small>':'';
+    let deadlineCell='<span class="mut">—</span>';
+    if(t.deadline){
+      const dd=new Date(t.deadline+'T00:00');
+      const overdue = dd < todayMid && t.status!=='Done';
+      deadlineCell='<span class="dl-tag'+(overdue?' overdue':'')+'">'+fmt(t.deadline)+(overdue?' · overdue':'')+'</span>';
+    }
     let opts='';
     STATUS_GROUPS.forEach(g=>{
       opts+='<optgroup label="'+g.group+'">';
@@ -1638,8 +1588,8 @@ function renderLog(){
     return '<div class="trow">'
       +'<div class="ttask" data-label="Task">'+escapeHtml(t.task)+slug+'<small>'+typeLabel+'</small></div>'
       +'<div class="tcell" data-label="Assignee">'+escapeHtml(ticketAssignees(t).join(', '))+'</div>'
-      +'<div class="tcell" data-label="Assigned by">'+escapeHtml(t.by||'')+'</div>'
-      +'<div class="tcell" data-label="Assigned">'+fmt(t.assignedDate)+'</div>'
+      +'<div class="tcell" data-label="Assigned by">'+escapeHtml(ticketBy(t).join(', '))+'</div>'
+      +'<div class="tcell" data-label="Deadline">'+deadlineCell+'</div>'
       +'<div data-label="Priority"><span class="badge '+t.priority+'">'+t.priority+'</span></div>'
       +'<div class="status-wrap" data-label="Status" style="color:'+statusColor(t.status)+'">'
         +'<select class="status-sel" style="background:'+statusColor(t.status)+'" onchange="changeStatus('+i+',this.value)">'+opts+'</select>'
@@ -1649,30 +1599,35 @@ function renderLog(){
 
   let html='';
   prios.forEach(p=>{
-    const label = PRIO_LABEL[p] ? (p+' · '+PRIO_LABEL[p]) : p;
     const badgeCls = PRIO_ORDER.includes(p) ? p : 'P3';
     html+='<div class="prio-group">'
       +'<div class="prio-header"><span class="p-badge '+badgeCls+'">'+p+'</span>'
       +'<span class="p-label">'+(PRIO_LABEL[p]||'Other')+'</span>'
       +'<span class="prio-count">'+groups[p].length+'</span></div>'
       +'<div class="tickets"><div class="thead">'
-      +'<div>Task</div><div>Assignee</div><div>Assigned by</div><div>Assigned</div><div>Priority</div><div>Status</div></div>';
+      +'<div>Task</div><div>Assignee</div><div>Assigned by</div><div>Deadline</div><div>Priority</div><div>Status</div></div>';
     groups[p].forEach(r=>{ html+=rowHtml(r); });
     html+='</div></div>';
   });
   body.innerHTML=html;
 }
-/* normalise a ticket's assignees to an array — supports old records that
-   only had a single `assignee` string */
+/* normalise a ticket's assignees to an array */
 function ticketAssignees(t){
   if(Array.isArray(t.assignees)) return t.assignees;
   if(t.assignee) return String(t.assignee).split(',').map(s=>s.trim()).filter(Boolean);
   return [];
 }
+/* normalise a ticket's "assigned by" to an array — supports old records
+   that only had a single `by` string */
+function ticketBy(t){
+  if(Array.isArray(t.byList) && t.byList.length) return t.byList;
+  if(t.by) return String(t.by).split(',').map(s=>s.trim()).filter(Boolean);
+  return [];
+}
 function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 /* ============================================================
-   WEBHOOK SETTINGS (editable URL, persisted in this browser)
+   WEBHOOK SETTINGS
    ============================================================ */
 const WEBHOOK_STORE_KEY = "factors_ticket_webhook_url";
 function loadWebhookUrl(){
@@ -1695,7 +1650,6 @@ function saveWebhook(){
   window.__WEBHOOK_URL = v || null;
   try{ if(v) localStorage.setItem(WEBHOOK_STORE_KEY,v); else localStorage.removeItem(WEBHOOK_STORE_KEY); }catch(e){}
 
-  // --- Supabase keys ---
   const su=document.getElementById('sbUrlInput').value.trim();
   const sk=document.getElementById('sbKeyInput').value.trim();
   let sbChanged=false;
@@ -1717,7 +1671,6 @@ function saveWebhook(){
   document.getElementById('toast-sub').textContent = (SB_URL&&SB_ANON) ? "Connecting global log…" : "Webhook saved · global log is local only";
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3400);
 
-  // (re)connect Supabase if keys present/changed
   if(SB_URL && SB_ANON && sbChanged){
     if(sbChannel && sbClient){ try{ sbClient.removeChannel(sbChannel); }catch(e){} }
     sbChannel=null; sbClient=null;
@@ -1738,13 +1691,11 @@ function resetWebhook(){
 
 loadWebhookUrl();
 loadSupabaseCfg();
-loadTickets();          // local cache first (instant paint / offline fallback)
-// Restore a remembered log sign-in so a refresh keeps you signed in.
+loadTickets();
 logUnlocked = loadLogAuth();
 reflectAuthUI();
 initUI();
 updateCount();
-// If Supabase keys exist, replace the local cache with the global log + go live.
 sbInit();
 </script>
 </body>
