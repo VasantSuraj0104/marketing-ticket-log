@@ -989,7 +989,7 @@ function ticketToRow(t){
     requested_by:t.by||null, requested_by_list:t.byList||ticketBy(t), by_id:t.byId||null, by_ids:t.byIds||[],
     priority:t.priority, category:t.category, dev_type:t.devType||null,
     notes:t.notes||null, figma:t.figma||null, frequency:t.frequency||null,
-    deadline:t.deadline||null,
+    due_date:t.deadline||null,
     seo:t.seo||null, attachments:t.attachments||[],
     status:t.status||'Newly Assigned',
     assigned_date:t.assignedDate||null, status_updated:t.statusUpdated||null,
@@ -1005,7 +1005,7 @@ function rowToTicket(r){
     byId:r.by_id||null, byIds:Array.isArray(r.by_ids)?r.by_ids:[],
     priority:r.priority, category:r.category, devType:r.dev_type||null,
     notes:r.notes||'', figma:r.figma||null, frequency:r.frequency||null,
-    deadline:r.deadline||null,
+    deadline:r.due_date||r.deadline||null,
     seo:r.seo||null, attachments:Array.isArray(r.attachments)?r.attachments:[],
     status:r.status||'Newly Assigned',
     assignedDate:r.assigned_date||(r.created_at?String(r.created_at).slice(0,10):todayISO()),
@@ -1015,8 +1015,24 @@ function rowToTicket(r){
 
 async function sbInsertTicket(t){
   const sb=await getSupabase(); if(!sb) return;
-  const { error }=await sb.from('tickets').insert(ticketToRow(t));
-  if(error) console.warn('Supabase insert failed:',error.message);
+  let row=ticketToRow(t);
+  // Retry loop: if the table is missing a column we sent, Supabase rejects the
+  // WHOLE insert (PostgREST code PGRST204). Rather than lose the ticket, drop the
+  // unknown column and try again. This keeps logging working even if the schema
+  // hasn't been migrated yet — you just won't get that one field until you add it.
+  for(let attempt=0; attempt<8; attempt++){
+    const { error }=await sb.from('tickets').insert(row);
+    if(!error) return;
+    const msg=(error.message||'')+' '+(error.details||'')+' '+(error.hint||'');
+    const m=msg.match(/'([^']+)' column|column "([^"]+)"|Could not find the '([^']+)'/i);
+    const col=m ? (m[1]||m[2]||m[3]) : null;
+    if(col && Object.prototype.hasOwnProperty.call(row,col)){
+      console.warn('Supabase: column "'+col+'" missing on tickets table — sending without it. Add it in SQL to store this field.');
+      const {[col]:_drop, ...rest}=row; row=rest; continue;
+    }
+    console.warn('Supabase insert failed:',error.message,error.details||'',error.hint||'');
+    return;
+  }
 }
 async function sbUpdateStatus(t){
   const sb=await getSupabase(); if(!sb) return;
@@ -1353,6 +1369,8 @@ function submitTicket(){
     byList,                                       // array of requester names
     byId:userId(byList[0]) || null,               // legacy single id (first requester)
     byIds:byList.map(userId).filter(Boolean),     // array of Notion user IDs for the Person column
+    byUnmatched:byList.filter(n=>!userId(n)),     // typed requesters with NO Notion account -> go to notes
+    assigneeUnmatched:assignees.filter(n=>!userId(n)), // assignees with no Notion account (rare)
     priority:state.priority, category:state.category, devType:d?d.name:null, notes:val('f-notes'),
     contentLink:(d&&d.figma)?val('f-content'):null,
     figma:(d&&d.figma)?val('f-figma'):null,
