@@ -426,12 +426,6 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
         </div>
 
         <div class="field">
-          <label class="lbl">Deadline <span style="color:var(--ink-5);font-weight:400">(optional)</span></label>
-          <input type="date" id="f-deadline" oninput="recompute()"/>
-          <div class="hint">Target completion date. Leave blank if there&rsquo;s no fixed deadline.</div>
-        </div>
-
-        <div class="field">
           <label class="lbl">Notes <span style="color:var(--ink-5);font-weight:400">(optional)</span></label>
           <textarea id="f-notes" placeholder="Context, links, references&hellip;" oninput="recompute()"></textarea>
         </div>
@@ -441,6 +435,12 @@ textarea{resize:vertical;min-height:74px;line-height:1.45}
           <input type="file" id="f-attach" class="attach-input" multiple onchange="addAttachments(this.files);this.value='';"/>
           <div class="attach-list" id="attach-list"></div>
           <div class="hint">Screenshots, briefs, or reference files (max 20&nbsp;MB each) &mdash; uploaded straight to the Notion page.</div>
+        </div>
+
+         <div class="field">
+          <label class="lbl">Deadline <span style="color:var(--ink-5);font-weight:400">(optional)</span></label>
+          <input type="date" id="f-deadline" oninput="recompute()"/>
+          <div class="hint">Target completion date. Leave blank if there&rsquo;s no fixed deadline.</div>
         </div>
 
         <!-- WEBFLOW SEO BLOCK -->
